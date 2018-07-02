@@ -1,0 +1,53 @@
+#data-import-dropzone {
+  min-height: 150px;
+  max-width: 500px;
+  border: 1px solid #0087f7;
+  box-sizing: border-box;
+  border-radius: 5px;
+  background: white;
+  padding: 20px 50px;
+  cursor: pointer;
+}
+
+#data-import-dropzone.hover {
+  background-color: #a0d8ff;
+  border: 2px solid #0087f7;
+}
+
+#form-pass-code {
+  margin-bottom: 40px;
+}
+
+.hidden {
+  display: none;
+}
+
+label {
+  font-weight: bold;
+}
+
+.message {
+  max-width: 500px;
+  margin: 20px;
+  padding: 20px 40px;
+}
+
+.info {
+  background-color: #ceecca;
+}
+
+.warning {
+  background-color: #ece377;
+}
+
+.error {
+  background-color: #ec7f84;
+}
+
+.url-filed {
+  background-color: #cadfec;
+}
+
+.url-input {
+  width: 500px;
+}

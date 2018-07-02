@@ -1,0 +1,36 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+
+    <title>Image Holder</title>
+    <link rel="stylesheet" href="style.css?v=1.0">
+</head>
+
+<body>
+<h1>Image Holder</h1>
+
+<form id="form-pass-code">
+    <label for="pass-code-element">Pass code:</label>
+    <input id="pass-code-element" type="password" autocomplete="off"/>
+</form>
+
+<div id="data-import-field">
+    <input id="data-import-input" class="hidden" type="file" accept=".jpg, .jpeg, .png, .gif" multiple="multiple"/>
+
+    <div id="data-import-dropzone">
+        <h2>Drop files here or click to upload</h2>
+    </div>
+</div>
+
+<div id="output-field" class="hidden">
+    <h2>Output</h2>
+    <div id="output-content"></div>
+</div>
+
+<script src="app.js"></script>
+<script>new Application()</script>
+
+</body>
+</html>
