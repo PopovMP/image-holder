@@ -1,7 +1,11 @@
 {
-  "name": "img-holder",
+  "name": "image-holder",
   "version": "1.0.0",
-  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/PopovMP/image-holder"
+  },
+  "license": "MIT",
   "dependencies": {
     "body-parser": "^1.18.3",
     "express": "^4.16.3",

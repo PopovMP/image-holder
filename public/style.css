@@ -51,3 +51,8 @@ label {
 .url-input {
   width: 500px;
 }
+
+hr {
+  margin-top: 50px;
+  max-width: 500px;
+}

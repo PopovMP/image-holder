@@ -1,5 +1,5 @@
 {
-  "port": 32072,
-  "passCode": 4698,
+  "port": 80,
+  "passCode": 42,
   "storagePath": "store"
 }

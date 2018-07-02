@@ -2,4 +2,3 @@
 node_modules
 public/store/*
 !public/store/.gitkeep
-
