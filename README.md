@@ -17,7 +17,7 @@ License: MIT
 
 ## Requirements
 
-Node.js https://nodejs.org/en/
+Node.js https://nodejs.org
 
 ## Settings
 
@@ -31,15 +31,22 @@ settings.json
 }
 ```
 
+ The passCode can be a number or a string.
+
 ## ToDo
 
 ### Tasks
 
  - Check and create the storage folder on startup.
- - Store the last 10 images links in the Local Storage. Load preview of the images on the index.
+ - Store the last 10 image links in the Browser's Local Storage. Show images preview on loading.
+ - Add a suffix to the image name if such one already exists.
+ - Add an option for overriding an existing images. 
 
 ### Ideas
  - Use a template engine (pug, ejs) for the views in order to be possible to load settings.
+ - Store the last 100 images mata data on the server. load them in teh index page.
+ - Add a "Delete" button to the image preview.
+ - If the passCode is "" or 0, remove the "Pass code" input. It will make the service public. No image delete or file rewrite must be available in that case.
 
 ## Powered by
 
