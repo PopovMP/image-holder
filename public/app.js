@@ -13,8 +13,7 @@ class Application {
     }
 
     dropper_fileLoaded(fileName, image) {
-        const encodedFileName = encodeURIComponent(fileName);
-        this.uploadFile(encodedFileName, image);
+        this.uploadFile(fileName, image);
     }
 
     dropper_warningOccurred(fileName, warningMessage) {
@@ -29,10 +28,12 @@ class Application {
 
     uploadFile(fileName, image) {
         const passCode = this.presenter.getPassCode();
+        const encodedPassCode = encodeURIComponent(passCode);
+        const encodedFileName = encodeURIComponent(fileName);
 
         const headers = [
-            {header: "PassCode", value: passCode},
-            {header: "FileName", value: fileName},
+            {header: "PassCode", value: encodedPassCode},
+            {header: "FileName", value: encodedFileName},
             {header: "Content-type", value: "multipart/form-data"}
         ];
 

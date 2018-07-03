@@ -9,15 +9,21 @@ router.post("/upload", uploadDataFile);
 
 function uploadDataFile(req, res) {
     const fileNameEncoded = req.header("FileName");
+    const passCodeEncoded = req.header("PassCode");
+
     const fileName = decodeURIComponent(fileNameEncoded);
-    const passCode = req.header("PassCode");
+    const passCode = decodeURIComponent(passCodeEncoded);
+
+    const requiredPassCode = typeof settings.passCode === "string"
+        ? settings.passCode
+        : settings.passCode.toString();
 
     if (!fileName) {
         res.json({err: "Wrong file name!", data: null});
         return;
     }
 
-    if (passCode !== settings.passCode.toString()) {
+    if (passCode !== requiredPassCode) {
         res.json({err: "Wrong pass code!", data: null});
         return;
     }

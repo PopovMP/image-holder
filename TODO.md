@@ -2,7 +2,6 @@
 
 ## Tasks
 
- - Encrypt the pass code before sending.
  - Check and create the storage folder on startup.
  - Store the last 10 images links in the Local Storage. Load preview of the images on the index.
 
