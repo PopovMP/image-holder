@@ -1,4 +1,5 @@
 #data-import-dropzone {
+  margin-left: 20px;
   min-height: 150px;
   max-width: 500px;
   border: 1px solid #0087f7;
@@ -50,6 +51,11 @@ label {
 
 .url-input {
   width: 500px;
+}
+
+.image-preview {
+  max-height: 300px;
+  max-width: 500px;
 }
 
 hr {

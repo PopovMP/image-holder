@@ -69,7 +69,7 @@ class ApplicationPresenter {
 
         const messageElement =
             `<div class="message url-filed">
-                <a href="${url}" target="_blank"><img id="${imgPreviewId}" src="" height="300" alt="Image preview" /></a>
+                <a href="${url}" target="_blank"><img id="${imgPreviewId}" class="image-preview" src="" alt="Image preview" /></a>
                 <br />
                 <input class="url-input" type="text" value="${url}" id="${urlBoxId}" />
             </div>`;
