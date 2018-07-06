@@ -1,0 +1,24 @@
+doctype html
+html(lang="en")
+  head
+    meta(charset="utf-8")
+    title Image Holder
+    link(rel="stylesheet" href="./css/style.css?v=1.1")
+  body
+    h1 Image Holder
+    form#form-pass-code
+      label(for="pass-code-element") Pass code:
+      input#pass-code-element(type="password" autocomplete="off")
+    #data-import-field
+      input#data-import-input.hidden(type="file" accept=".jpg, .jpeg, .png, .gif" multiple="multiple")
+      #data-import-dropzone
+        h2 Drop files here or click to upload
+    #output-field.hidden
+      h2 Output
+      #output-content
+    hr(align="left")
+    h3 Simple open-source self-hosted image holder app.
+    a(href="https://github.com/PopovMP/image-holder") https://github.com/PopovMP/image-holder
+    script(src="./js/app.js")
+    script.
+      new Application()

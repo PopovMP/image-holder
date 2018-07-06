@@ -8,12 +8,16 @@ const morgan = require("morgan");
 const bodyParser = require("body-parser");
 
 const settings = require("./settings");
-const fileUpload = require("./file-upload");
+const viewsIndex = require("./routes/views-index");
+const fileUpload = require("./routes/api-upload");
 
 const port = settings.port;
 
 const app = express();
 app.set("port", port);
+app.set("views", path.join(__dirname, "views"));
+app.set("view engine", "pug");
+
 app.disable("x-powered-by");
 
 app.use(favicon(path.join(__dirname, "public", "favicon.ico")));
@@ -21,6 +25,7 @@ app.use(morgan("dev"));
 app.use(express.static(path.join(__dirname, "public")));
 app.use(bodyParser.urlencoded({extended: false}));
 
+app.use("/", viewsIndex);
 app.use("/api", fileUpload);
 
 app.use("/test", function (req, res) {

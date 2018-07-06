@@ -43,7 +43,7 @@ settings.json
  - Add an option for overriding an existing images. 
 
 ### Ideas
- - Use a template engine (pug, ejs) for the views in order to be possible to load settings.
+
  - Store the last 100 images mata data on the server. load them in teh index page.
  - Add a "Delete" button to the image preview.
  - If the passCode is "" or 0, remove the "Pass code" input. It will make the service public. No image delete or file rewrite must be available in that case.
