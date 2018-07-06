@@ -1,5 +1,11 @@
 {
+  "acceptedFiles": [
+    "png",
+    "jpg",
+    "jpeg"
+  ],
+  "maxFileSizeKb": 1024,
+  "passCode": "",
   "port": 8080,
-  "passCode": 42,
   "storagePath": "store"
 }

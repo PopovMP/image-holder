@@ -1,15 +1,16 @@
 "use strict";
 
 class Application {
-    constructor() {
-        const fileExtensions = [".png", ".jpg", ".jpeg", ".gif"];
+    constructor(appModel) {
+        this.appModel = appModel;
+        const fileExtensions = appModel.acceptedFiles.map(e => `.${e}`);
 
         this.dropper = new FileDropper(fileExtensions);
         this.dropper.fileLoaded = this.dropper_fileLoaded.bind(this);
         this.dropper.warningOccurred = this.dropper_warningOccurred.bind(this);
         this.dropper.errorOccurred = this.dropper_errorOccurred.bind(this);
 
-        this.presenter = new ApplicationPresenter();
+        this.presenter = new ApplicationPresenter(this.appModel);
     }
 
     dropper_fileLoaded(fileName, image) {
@@ -32,9 +33,9 @@ class Application {
         const encodedFileName = encodeURIComponent(fileName);
 
         const headers = [
-            {header: "PassCode", value: encodedPassCode},
-            {header: "FileName", value: encodedFileName},
-            {header: "Content-type", value: "multipart/form-data"}
+            { header: "PassCode", value: encodedPassCode },
+            { header: "FileName", value: encodedFileName },
+            { header: "Content-type", value: "multipart/form-data" }
         ];
 
         IoService.postData("api/upload", image, headers, this.uploadFile_ready.bind(this))
@@ -51,17 +52,21 @@ class Application {
 }
 
 class ApplicationPresenter {
-    constructor() {
-        this.passCodeform = document.getElementById("form-pass-code");
-        this.passCodeElement = document.getElementById("pass-code-element");
+    constructor(appModel) {
+        this.appModel = appModel;
+
+        if (this.appModel.isPassCodeRequired) {
+            this.passCodeform = document.getElementById("form-pass-code");
+            this.passCodeElement = document.getElementById("pass-code-element");
+            this.passCodeform.addEventListener("submit", this.formSubmit.bind(this))
+        }
+
         this.outputFiled = document.getElementById("output-field");
         this.outputContent = document.getElementById("output-content");
-
-        this.passCodeform.addEventListener("submit", this.formSubmit.bind(this))
     }
 
     getPassCode() {
-        return this.passCodeElement.value;
+        return this.appModel.isPassCodeRequired ? this.passCodeElement.value : "";
     }
 
     showUploadOutput(url) {

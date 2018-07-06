@@ -1,5 +1,8 @@
-#data-import-dropzone {
+#wrapper {
   margin-left: 20px;
+}
+
+#data-import-dropzone {
   min-height: 150px;
   max-width: 500px;
   border: 1px solid #0087f7;
@@ -29,7 +32,7 @@ label {
 
 .message {
   max-width: 500px;
-  margin: 20px;
+  margin-top: 20px;
   padding: 20px 40px;
 }
 
