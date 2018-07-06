@@ -11,7 +11,8 @@ function uploadDataFile(req, res) {
     const fileNameEncoded = req.header("FileName");
     const passCodeEncoded = req.header("PassCode");
 
-    const fileName = decodeURIComponent(fileNameEncoded);
+    const fileNameDecoded = decodeURIComponent(fileNameEncoded);
+    const fileName = path.basename(fileNameDecoded);
     const passCode = decodeURIComponent(passCodeEncoded);
 
     const requiredPassCode = typeof settings.passCode === "string"
