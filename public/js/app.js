@@ -28,25 +28,27 @@ class Application {
     }
 
     uploadFile(fileName, image) {
-        const passCode = this.presenter.getPassCode();
-        const encodedPassCode = encodeURIComponent(passCode);
+        const optionsModel = this.presenter.getSubmitOptions();
+        const encodedPassCode = encodeURIComponent(optionsModel.passCode);
         const encodedFileName = encodeURIComponent(fileName);
 
         const headers = [
             { header: "PassCode", value: encodedPassCode },
             { header: "FileName", value: encodedFileName },
+            { header: "OverrideExistingFile", value: optionsModel.isOverrideExisting },
             { header: "Content-type", value: "multipart/form-data" }
         ];
 
         IoService.postData("api/upload", image, headers, this.uploadFile_ready.bind(this))
     }
 
-    uploadFile_ready(err, imgUrl) {
+    uploadFile_ready(err, fileMeta) {
         if (err) {
             this.presenter.showError("Error with file upload: " + err);
-        } else if (imgUrl) {
-            const decodedUrl = decodeURIComponent(imgUrl);
-            this.presenter.showUploadOutput(decodedUrl);
+        } else if (fileMeta) {
+            this.presenter.showUploadOutput(fileMeta);
+        } else {
+            this.presenter.showError("Something went wrong!");
         }
     }
 }
@@ -61,20 +63,39 @@ class ApplicationPresenter {
             this.passCodeform.addEventListener("submit", this.formSubmit.bind(this))
         }
 
+        this.optionOverrideExistingFile = document.getElementById("override-existing-file");
         this.outputFiled = document.getElementById("output-field");
         this.outputContent = document.getElementById("output-content");
+    }
+
+    getSubmitOptions() {
+        const passCode = this.appModel.isPassCodeRequired ? this.passCodeElement.value : "";
+
+        const optionsModel = {
+            passCode: passCode,
+            isOverrideExisting: this.optionOverrideExistingFile.checked
+        };
+
+        return optionsModel;
     }
 
     getPassCode() {
         return this.appModel.isPassCodeRequired ? this.passCodeElement.value : "";
     }
 
-    showUploadOutput(url) {
+    showUploadOutput(fileMeta) {
         const urlBoxId = "input-" + Date.now().toString();
         const imgPreviewId = "img-" + Date.now().toString();
+        const url = decodeURIComponent(fileMeta.url);
+        const time = new Date(fileMeta.time).toLocaleString();
 
         const messageElement =
             `<div class="message url-filed">
+                <h3>${fileMeta.name}</h3>
+
+                <p>
+                    Size: ${fileMeta.size} kB, uploaded at: ${time}
+                </p>
                 <a href="${url}" target="_blank"><img id="${imgPreviewId}" class="image-preview" src="" alt="Image preview" /></a>
                 <br />
                 <input class="url-input" type="text" value="${url}" id="${urlBoxId}" />

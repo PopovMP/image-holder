@@ -15,7 +15,11 @@ html(lang="en")
         input#data-import-input.hidden(type="file" accept="#{viewModel.acceptedFiles.join(',')}" multiple="multiple")
         #data-import-dropzone
           h2 Drop files here or click to upload
-          p Max file size - #{viewModel.maxFileSizeKb}Kb.
+          p Accepted file types: #{viewModel.acceptedFiles.join(", ")}.
+          p Max file size - #{viewModel.maxFileSizeKb} kB.
+      form#form-uppload-options
+        input#override-existing-file(type="checkbox" name="override")
+        label(for="override-existing-file") Override an existing file with the same name
       #output-field.hidden
         h2 Output
         #output-content
