@@ -3,11 +3,11 @@
 const path = require("path");
 const router = require("express").Router();
 const settings = require("../settings");
-const fileUpload = require("../file-manager");
+const fileManager = require("../file-manager");
 
-router.post("/upload", uploadDataFile);
+router.post("/upload", uploadImage);
 
-function uploadDataFile(req, res) {
+function uploadImage(req, res) {
     const fileNameEncoded = req.header("FileName");
     const passCodeEncoded = req.header("PassCode");
     const isOverrideExisting = req.header("OverrideExistingFile").toLowerCase() === "true";
@@ -37,7 +37,7 @@ function uploadDataFile(req, res) {
     function req_end() {
         if (fileContent) {
             const host = encodeURIComponent(req.headers.origin);
-            fileUpload.saveFile(fileName, fileContent, isOverrideExisting, host, fileUpload_ready);
+            fileManager.saveFile(fileName, fileContent, isOverrideExisting, host, fileUpload_ready);
         } else {
             res.json({err: "Error with receiving content!", data: null});
         }

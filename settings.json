@@ -9,5 +9,6 @@
   "port": 8080,
   "storagePath": "store",
   "metaFilePath": "db/meta.json",
+  "maxSearchCount": 20,
   "showLastImages": 20
 }

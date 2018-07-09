@@ -23,7 +23,7 @@ function searchImage(req, res) {
         return;
     }
 
-    const imageList = dbManager.find(phrase, 0, settings.showLastImages);
+    const imageList = dbManager.find(phrase, 0, settings.maxSearchCount);
 
     res.json({err: null, data: imageList});
 
