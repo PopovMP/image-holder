@@ -9,8 +9,8 @@ const bodyParser = require("body-parser");
 
 const settings = require("./settings");
 const viewsIndex = require("./routes/views-index");
-const fileUpload = require("./routes/api-upload");
-const searchImage = require("./routes/api-search");
+const apiUpload = require("./routes/api-upload");
+const apiSearch = require("./routes/api-search");
 
 const port = settings.port;
 
@@ -27,8 +27,8 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use(bodyParser.urlencoded({extended: false}));
 
 app.use("/", viewsIndex);
-app.use("/api", fileUpload);
-app.use("/api", searchImage);
+app.use("/api", apiUpload);
+app.use("/api", apiSearch);
 
 app.use(catchPageNotFound);
 app.use(renderError);
