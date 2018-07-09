@@ -3,27 +3,30 @@ html(lang="en")
   head
     meta(charset="utf-8")
     title Image Holder
-    link(rel="stylesheet" href="./css/style.css?v=1.1")
+    link(rel="stylesheet" href="./css/style.css?v=1.2")
   body
     #wrapper
       h1 Image Holder
-      if viewModel.isPassCodeRequired
-        form#form-pass-code
-          label(for="pass-code-element") Pass code:
-          input#pass-code-element(type="password" autocomplete="off")
 
       #data-import-field
+        if viewModel.isPassCodeRequired
+          form#form-pass-code
+            label(for="pass-code-element") Upload pass code:
+            input#pass-code-element(type="password" autocomplete="off")
+
         input#data-import-input.hidden(type="file" accept="#{viewModel.acceptedFiles.join(',')}" multiple="multiple")
+
         #data-import-dropzone
           h2 Drop files here or click to upload
           p Accepted file types: #{viewModel.acceptedFiles.join(", ")}.
           p Max file size - #{viewModel.maxFileSizeKb} kB.
-      form#form-uppload-options
-        input#override-existing-file(type="checkbox" name="override")
-        label(for="override-existing-file") Override an existing file with the same name
+
+        form#form-uppload-options
+          input#override-existing-file(type="checkbox" name="override")
+          label(for="override-existing-file") Override an existing file with the same name.
 
       form#form-search
-        label(for="input-search") Search:
+        label(for="input-search") Search image (JS RegExp):
         input#input-search(type="text" autocomplete="off" style="margin-left: 10px")
 
       #output-content

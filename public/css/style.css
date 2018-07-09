@@ -1,10 +1,16 @@
 #wrapper {
   margin-left: 20px;
+  max-width: 640px;
+}
+
+#data-import-field {
+  border-radius: 5px;
+  background-color: #ceecca;
+  padding: 20px;
 }
 
 #data-import-dropzone {
   min-height: 150px;
-  max-width: 500px;
   border: 1px solid #0087f7;
   box-sizing: border-box;
   border-radius: 5px;
@@ -20,7 +26,7 @@
 
 form {
   margin-top: 20px;
-  margin-bottom: 40px;
+  margin-bottom: 20px;
 }
 
 #pass-code-element {
@@ -36,9 +42,9 @@ label {
 }
 
 .message {
-  max-width: 500px;
+  border-radius: 5px;
   margin-top: 20px;
-  padding: 20px 40px;
+  padding: 20px;
 }
 
 .info {
@@ -58,15 +64,14 @@ label {
 }
 
 .url-input {
-  width: 500px;
+  width: 100%;
 }
 
 .image-preview {
   max-height: 300px;
-  max-width: 500px;
+  margin-bottom: 10px;
 }
 
 hr {
   margin-top: 50px;
-  max-width: 500px;
 }
