@@ -18,7 +18,7 @@ function find(pattern, start, count) {
     start = start || 0;
     count = count || dbContent.length - start;
 
-    const regExp = new RegExp(pattern, "i").compile();
+    const regExp = new RegExp(pattern, "i");
     const selection = dbContent
         .filter(record => regExp.test(record.name))
         .slice(start, start + count);

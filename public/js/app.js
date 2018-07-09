@@ -11,11 +11,14 @@ class Application {
         this.dropper.errorOccurred = this.dropper_errorOccurred.bind(this);
 
         this.presenter = new ApplicationPresenter(this.appModel);
+        this.presenter.searchImage = this.presenter_searchImage_submit.bind(this);
 
-        this.showLatestImages(appModel.preloadModel);
+        this.showImages(appModel.preloadModel);
     }
 
-    showLatestImages(preloadModel) {
+    showImages(preloadModel) {
+        this.presenter.clearOutput();
+
         const sortedModel = preloadModel.sort((a, b) => a.time - b.time);
 
         for (const model of sortedModel) {
@@ -61,10 +64,34 @@ class Application {
             this.presenter.showError("Something went wrong!");
         }
     }
+
+    presenter_searchImage_submit(phrase) {
+        const optionsModel = this.presenter.getSubmitOptions();
+        const encodedPassCode = encodeURIComponent(optionsModel.passCode);
+        const encodedSearchPhrase = encodeURIComponent(phrase);
+
+        const headers = [
+            {header: "PassCode", value: encodedPassCode},
+            {header: "SearchPhrase", value: encodedSearchPhrase},
+        ];
+
+        IoService.postData("api/search", {}, headers, this.searchImage_ready.bind(this))
+    }
+
+    searchImage_ready(err, data) {
+        if (err) {
+            this.presenter.showError("Error with search image: " + err);
+        } else {
+            this.showImages(data);
+        }
+    }
 }
 
 class ApplicationPresenter {
     constructor(appModel) {
+        this.searchImage = null;
+        this.idIndex = 999;
+
         this.appModel = appModel;
 
         if (this.appModel.isPassCodeRequired) {
@@ -74,6 +101,12 @@ class ApplicationPresenter {
         }
 
         this.optionOverrideExistingFile = document.getElementById("override-existing-file");
+
+        this.formSearch = document.getElementById("form-search");
+        this.inputSearch = document.getElementById("input-search");
+
+        this.formSearch.addEventListener("submit", this.formSearch_submit.bind(this));
+
         this.outputContent = document.getElementById("output-content");
     }
 
@@ -89,15 +122,14 @@ class ApplicationPresenter {
     }
 
     showImageOutput(fileMeta) {
-        const urlBoxId = "input-" + Date.now().toString();
-        const imgPreviewId = "img-" + Date.now().toString();
+        const urlBoxId = `input-${++this.idIndex}`;
+        const imgPreviewId = `img-${++this.idIndex}`;
         const url = decodeURIComponent(fileMeta.url);
         const time = new Date(fileMeta.time).toLocaleString();
 
         const messageElement =
             `<div class="message url-filed">
                 <h3>${fileMeta.name}</h3>
-
                 <p>
                     Size: ${fileMeta.size} kB, uploaded at: ${time}
                 </p>
@@ -115,6 +147,10 @@ class ApplicationPresenter {
         imagePreview["src"] = url;
     }
 
+    clearOutput() {
+        this.outputContent.innerHTML = "";
+    }
+
     showError(errorMessage) {
         const messageElement = `<div class="message error">${errorMessage}</div>`;
         this.outputContent.insertAdjacentHTML("afterbegin", messageElement);
@@ -123,6 +159,15 @@ class ApplicationPresenter {
     showWarning(warningMessage) {
         const messageElement = `<div class="message warning">${warningMessage}</div>`;
         this.outputContent.insertAdjacentHTML("afterbegin", messageElement);
+    }
+
+    formSearch_submit(event) {
+        event.preventDefault();
+
+        if (typeof this.searchImage === "function") {
+            const phrase = this.inputSearch.value;
+            this.searchImage(phrase);
+        }
     }
 
     formSubmit(event) {

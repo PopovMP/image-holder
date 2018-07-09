@@ -11,8 +11,9 @@ License: MIT
  - It stores the files in a public local folder.
  - It may require a pass key for an upload (set in the server's settings).
  - It shows teh latest images preview on load.
-  
-![Screnshot](https://image-holder.forexsb.com/store/image-holder-screenshot.png)
+ - RegExp search through all uploaded images.
+ 
+ ![Screnshot](https://image-holder.forexsb.com/store/image-holder-screenshot.png)
 
 ## Requirements
 
@@ -39,10 +40,6 @@ settings.json
 ```
 
  The passCode can be a number or a string. If it is 0 or "", the "Pass code" input is hidden.
-
-## ToDo
-
- - add RegEx search
 
 ## Powered by
 

@@ -10,6 +10,7 @@ const bodyParser = require("body-parser");
 const settings = require("./settings");
 const viewsIndex = require("./routes/views-index");
 const fileUpload = require("./routes/api-upload");
+const searchImage = require("./routes/api-search");
 
 const port = settings.port;
 
@@ -27,6 +28,7 @@ app.use(bodyParser.urlencoded({extended: false}));
 
 app.use("/", viewsIndex);
 app.use("/api", fileUpload);
+app.use("/api", searchImage);
 
 app.use(catchPageNotFound);
 app.use(renderError);
