@@ -66,12 +66,9 @@ class Application {
     }
 
     presenter_searchImage_submit(phrase) {
-        const optionsModel = this.presenter.getSubmitOptions();
-        const encodedPassCode = encodeURIComponent(optionsModel.passCode);
         const encodedSearchPhrase = encodeURIComponent(phrase);
 
         const headers = [
-            {header: "PassCode", value: encodedPassCode},
             {header: "SearchPhrase", value: encodedSearchPhrase},
         ];
 
