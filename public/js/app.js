@@ -74,7 +74,6 @@ class ApplicationPresenter {
         }
 
         this.optionOverrideExistingFile = document.getElementById("override-existing-file");
-        this.outputFiled = document.getElementById("output-field");
         this.outputContent = document.getElementById("output-content");
     }
 
@@ -107,7 +106,6 @@ class ApplicationPresenter {
                 <input class="url-input" type="text" value="${url}" id="${urlBoxId}" />
             </div>`;
 
-        this.outputFiled.classList.remove("hidden");
         this.outputContent.insertAdjacentHTML("afterbegin", messageElement);
 
         const urlBox = document.getElementById(urlBoxId);
@@ -119,13 +117,11 @@ class ApplicationPresenter {
 
     showError(errorMessage) {
         const messageElement = `<div class="message error">${errorMessage}</div>`;
-        this.outputFiled.classList.remove("hidden");
         this.outputContent.insertAdjacentHTML("afterbegin", messageElement);
     }
 
     showWarning(warningMessage) {
         const messageElement = `<div class="message warning">${warningMessage}</div>`;
-        this.outputFiled.classList.remove("hidden");
         this.outputContent.insertAdjacentHTML("afterbegin", messageElement);
     }
 
@@ -133,7 +129,6 @@ class ApplicationPresenter {
         event.preventDefault();
     }
 }
-
 
 class FileDropper {
     constructor(fileExtensions) {
