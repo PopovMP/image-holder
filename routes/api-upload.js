@@ -16,16 +16,18 @@ function uploadImage(req, res) {
     const fileName = path.basename(fileNameDecoded);
     const passCode = decodeURIComponent(passCodeEncoded);
 
-    const requiredPassCode = typeof settings.passCode === "string"
-        ? settings.passCode
-        : settings.passCode.toString();
-
     if (!fileName) {
         res.json({err: "Wrong file name!", data: null});
         return;
     }
 
-    if (passCode !== requiredPassCode) {
+    const requiredPassCode = typeof settings.passCode === "string"
+        ? settings.passCode
+        : settings.passCode.toString();
+
+    const isCodeValid = !settings.passCode || passCode === requiredPassCode;
+
+    if (!isCodeValid) {
         res.json({err: "Wrong pass code!", data: null});
         return;
     }

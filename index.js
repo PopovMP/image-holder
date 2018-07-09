@@ -11,6 +11,7 @@ const settings = require("./settings");
 const viewsIndex = require("./routes/views-index");
 const apiUpload = require("./routes/api-upload");
 const apiSearch = require("./routes/api-search");
+const apiValidate = require("./routes/api-validate");
 
 const port = settings.port;
 
@@ -29,6 +30,7 @@ app.use(bodyParser.urlencoded({extended: false}));
 app.use("/", viewsIndex);
 app.use("/api", apiUpload);
 app.use("/api", apiSearch);
+app.use("/api", apiValidate);
 
 app.use(catchPageNotFound);
 app.use(renderError);

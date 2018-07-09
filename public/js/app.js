@@ -12,6 +12,7 @@ class Application {
 
         this.presenter = new ApplicationPresenter(this.appModel);
         this.presenter.searchImage = this.presenter_searchImage_submit.bind(this);
+        this.presenter.passCodeSubmit = this.presenter_passCode_submit.bind(this);
 
         this.showImages(appModel.preloadModel);
     }
@@ -91,19 +92,44 @@ class Application {
             this.showImages(data);
         }
     }
+
+    presenter_passCode_submit(passCode) {
+        const encodedPassCode = encodeURIComponent(passCode);
+
+        const headers = [
+            {header: "PassCode", value: encodedPassCode},
+        ];
+
+        IoService.postData("api/validate", {}, headers, this.validate_ready.bind(this))
+    }
+
+    validate_ready(err, isValid) {
+        if (err) {
+            this.presenter.showError("Error with validation: " + err);
+        } else {
+            if (isValid) {
+                this.presenter.showUploadControls();
+            } else {
+                this.presenter.showWarning("Wrong pass code!")
+            }
+        }
+    }
 }
 
 class ApplicationPresenter {
     constructor(appModel) {
         this.searchImage = null;
+        this.passCodeSubmit = null;
         this.idIndex = 999;
 
         this.appModel = appModel;
 
         if (this.appModel.isPassCodeRequired) {
-            this.passCodeform = document.getElementById("form-pass-code");
-            this.passCodeElement = document.getElementById("pass-code-element");
-            this.passCodeform.addEventListener("submit", this.formSubmit.bind(this))
+            this.formPassCode = document.getElementById("form-pass-code");
+            this.inputPassCode = document.getElementById("pass-code-element");
+            this.formPassCode.addEventListener("submit", this.formPassCode_submit.bind(this))
+        } else {
+            this.showUploadControls();
         }
 
         this.optionOverrideExistingFile = document.getElementById("override-existing-file");
@@ -117,7 +143,7 @@ class ApplicationPresenter {
     }
 
     getSubmitOptions() {
-        const passCode = this.appModel.isPassCodeRequired ? this.passCodeElement.value : "";
+        const passCode = this.appModel.isPassCodeRequired ? this.inputPassCode.value : "";
 
         const optionsModel = {
             passCode: passCode,
@@ -125,6 +151,12 @@ class ApplicationPresenter {
         };
 
         return optionsModel;
+    }
+
+    showUploadControls() {
+        document.getElementById("form-pass-code").classList.add("hidden");
+        document.getElementById("data-import-dropzone").classList.remove("hidden");
+        document.getElementById("form-upload-options").classList.remove("hidden");
     }
 
     showImageOutput(fileMeta) {
@@ -176,8 +208,13 @@ class ApplicationPresenter {
         }
     }
 
-    formSubmit(event) {
+    formPassCode_submit(event) {
         event.preventDefault();
+
+        if (typeof this.passCodeSubmit === "function") {
+            const passCode = this.inputPassCode.value;
+            this.passCodeSubmit(passCode);
+        }
     }
 }
 
