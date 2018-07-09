@@ -7,5 +7,6 @@
   "maxFileSizeKb": 1024,
   "passCode": 42,
   "port": 8080,
-  "storagePath": "store"
+  "storagePath": "store",
+  "metaFilePath": "db/meta.json"
 }

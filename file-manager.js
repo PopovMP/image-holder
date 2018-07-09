@@ -5,6 +5,10 @@ const fs = require("fs");
 const path = require("path");
 
 const settings = require("./settings");
+const dbManager = require("./db-manager");
+
+const metaFilePath = path.join(__dirname, settings.metaFilePath);
+dbManager.connect(metaFilePath)
 
 function saveFile(fileName, fileContent, isOverrideExisting, host, callback) {
     const data = fileContent.replace(/^data:image\/\w+;base64,/, "");
@@ -36,6 +40,8 @@ function saveFile(fileName, fileContent, isOverrideExisting, host, callback) {
             hash: fileHash,
             time: time
         };
+
+        dbManager.insert(fileMeta);
 
         callback(null, fileMeta);
     }

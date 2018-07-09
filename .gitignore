@@ -1,4 +1,7 @@
 .idea
+.vscode
 node_modules
 public/store/*
 !public/store/.gitkeep
+db/*
+!db/.gitkeep
