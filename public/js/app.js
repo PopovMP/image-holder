@@ -27,6 +27,15 @@ class Application {
     }
 
     dropper_fileLoaded(fileName, image) {
+        const fileSize = 0.75 * image.length;
+        const fileSizeKb = Math.round(100 * fileSize / 1024) / 100;
+
+        if (fileSizeKb > this.appModel.maxFileSizeKb) {
+            const message = `The file is too big! It must be maximum ${this.appModel.maxFileSizeKb} kB`;
+            this.presenter.showWarning(message);
+            return;
+        }
+
         this.uploadFile(fileName, image);
     }
 
