@@ -26,6 +26,12 @@ function find(pattern, start, count) {
     return selection;
 }
 
+function isExists(fileName) {
+    const isExits = dbContent.some(e => e.name === fileName);
+
+    return isExits;
+}
+
 function get(start, count) {
     start = start || 0;
     count = count || dbContent.length - start;
@@ -70,5 +76,6 @@ module.exports = {
     connect: connect,
     find: find,
     get: get,
+    isExists: isExists,
     insert: insert
 };

@@ -13,6 +13,21 @@ dbManager.connect(metaFilePath);
 function saveFile(fileName, fileContent, isOverrideExisting, host, callback) {
     const data = fileContent.replace(/^data:image\/\w+;base64,/, "");
     const buffer = new Buffer(data, "base64");
+    const fileSizeKb = Math.round(100 * buffer.byteLength / 1024) / 100;
+
+    if (fileSizeKb > settings.maxFileSizeKb) {
+        const errorMessage = `The file is too big! It must be maximum ${settings.maxFileSizeKb} kB`;
+        callback(errorMessage, null);
+        return;
+    }
+
+    const isExists = dbManager.isExists(fileName);
+    if (isExists && !isOverrideExisting) {
+        const errorMessage = `Such file already exists! Use the "Override option", if you really want to replace the file.`;
+        callback(errorMessage, null);
+        return;
+    }
+
     const filePath = path.join(__dirname, "public", settings.storagePath, fileName);
 
     fs.writeFile(filePath, buffer, fs_writeFile_ready);
@@ -24,14 +39,8 @@ function saveFile(fileName, fileContent, isOverrideExisting, host, callback) {
         }
 
         const fileUrl = path.join(host, settings.storagePath, fileName);
-        const fileSizeKb = Math.round(100 * buffer.byteLength / 1024) / 100;
         const fileHash = createHash(buffer);
         const time = new Date().getTime();
-
-        if (fileSizeKb > settings.maxFileSizeKb) {
-            callback("The file is too big!", null);
-            return;
-        }
 
         const fileMeta = {
             name: fileName,

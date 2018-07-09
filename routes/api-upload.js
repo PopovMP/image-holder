@@ -10,7 +10,7 @@ router.post("/upload", uploadDataFile);
 function uploadDataFile(req, res) {
     const fileNameEncoded = req.header("FileName");
     const passCodeEncoded = req.header("PassCode");
-    const isOverrideExisting = req.header("OverrideExistingFile");
+    const isOverrideExisting = req.header("OverrideExistingFile").toLowerCase() === "true";
 
     const fileNameDecoded = decodeURIComponent(fileNameEncoded);
     const fileName = path.basename(fileNameDecoded);
