@@ -6,12 +6,11 @@ License: MIT
 
 ## Features
 
- - Self hosted app on node.js
- - Provides a Drag / Drop images upload.
- - Stores the files in a public local folder.
- - Requires a pass key for an upload (set in the server).
- - Shows an image preview.
- - It is possible to upload multiple images at once.
+ - Image Holder is a self hosted app on node.js
+ - It provides a Drag / Drop images upload.
+ - It stores the files in a public local folder.
+ - It may require a pass key for an upload (set in the server's settings).
+ - It shows teh latest images preview on load.
   
 ![Screnshot](https://image-holder.forexsb.com/store/image-holder-screenshot.png)
 
@@ -25,28 +24,25 @@ settings.json
 
 ```json
 {
-  "port": 80,
+  "acceptedFiles": [
+    "png",
+    "jpg",
+    "jpeg"
+  ],
+  "maxFileSizeKb": 1024,
   "passCode": 42,
-  "storagePath": "store"
+  "port": 8080,
+  "storagePath": "store",
+  "metaFilePath": "db/meta.json",
+  "showLastImages": 20
 }
 ```
 
- The passCode can be a number or a string.
+ The passCode can be a number or a string. If it is 0 or "", the "Pass code" input is hidden.
 
 ## ToDo
 
-### Tasks
-
- - Check and create the storage folder on startup.
- - Store the last 10 image links in the Browser's Local Storage. Show images preview on loading.
- - Add a suffix to the image name if such one already exists.
- - Add an option for overriding an existing images. 
-
-### Ideas
-
- - Store the last 100 images mata data on the server. load them in teh index page.
- - Add a "Delete" button to the image preview.
- - If the passCode is "" or 0, remove the "Pass code" input. It will make the service public. No image delete or file rewrite must be available in that case.
+ - add RegEx search
 
 ## Powered by
 
