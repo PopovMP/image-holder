@@ -1,4 +1,4 @@
-"use strict"
+"use strict";
 
 const fs = require("fs");
 
@@ -9,7 +9,7 @@ function connect(dbPath) {
     dbFilePath = dbPath;
     const isExists = fs.existsSync(dbFilePath);
     if (isExists) {
-        const content = fs.readFileSync(dbFilePath);
+        const content = fs.readFileSync(dbFilePath, "utf8");
         dbContent = JSON.parse(content);
     }
 }
@@ -70,5 +70,5 @@ module.exports = {
     connect: connect,
     find: find,
     get: get,
-    insert, insert
-}
+    insert: insert
+};

@@ -8,5 +8,6 @@
   "passCode": 42,
   "port": 8080,
   "storagePath": "store",
-  "metaFilePath": "db/meta.json"
+  "metaFilePath": "db/meta.json",
+  "showLastImages": 20
 }

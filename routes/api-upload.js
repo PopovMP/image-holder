@@ -21,12 +21,12 @@ function uploadDataFile(req, res) {
         : settings.passCode.toString();
 
     if (!fileName) {
-        res.json({ err: "Wrong file name!", data: null });
+        res.json({err: "Wrong file name!", data: null});
         return;
     }
 
     if (passCode !== requiredPassCode) {
-        res.json({ err: "Wrong pass code!", data: null });
+        res.json({err: "Wrong pass code!", data: null});
         return;
     }
 
@@ -39,12 +39,12 @@ function uploadDataFile(req, res) {
             const host = encodeURIComponent(req.headers.origin);
             fileUpload.saveFile(fileName, fileContent, isOverrideExisting, host, fileUpload_ready);
         } else {
-            res.json({ err: "Error with receiving content!", data: null });
+            res.json({err: "Error with receiving content!", data: null});
         }
     }
 
     function fileUpload_ready(err, data) {
-        res.json({ err: err, data: data });
+        res.json({err: err, data: data});
     }
 }
 

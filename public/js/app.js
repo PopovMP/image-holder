@@ -11,6 +11,16 @@ class Application {
         this.dropper.errorOccurred = this.dropper_errorOccurred.bind(this);
 
         this.presenter = new ApplicationPresenter(this.appModel);
+
+        this.showLatestImages(appModel.preloadModel);
+    }
+
+    showLatestImages(preloadModel) {
+        const sortedModel = preloadModel.sort((a, b) => a.time - b.time);
+
+        for (const model of sortedModel) {
+            this.presenter.showImageOutput(model);
+        }
     }
 
     dropper_fileLoaded(fileName, image) {
@@ -33,10 +43,10 @@ class Application {
         const encodedFileName = encodeURIComponent(fileName);
 
         const headers = [
-            { header: "PassCode", value: encodedPassCode },
-            { header: "FileName", value: encodedFileName },
-            { header: "OverrideExistingFile", value: optionsModel.isOverrideExisting },
-            { header: "Content-type", value: "multipart/form-data" }
+            {header: "PassCode", value: encodedPassCode},
+            {header: "FileName", value: encodedFileName},
+            {header: "OverrideExistingFile", value: optionsModel.isOverrideExisting},
+            {header: "Content-type", value: "multipart/form-data"}
         ];
 
         IoService.postData("api/upload", image, headers, this.uploadFile_ready.bind(this))
@@ -46,7 +56,7 @@ class Application {
         if (err) {
             this.presenter.showError("Error with file upload: " + err);
         } else if (fileMeta) {
-            this.presenter.showUploadOutput(fileMeta);
+            this.presenter.showImageOutput(fileMeta);
         } else {
             this.presenter.showError("Something went wrong!");
         }
@@ -79,11 +89,7 @@ class ApplicationPresenter {
         return optionsModel;
     }
 
-    getPassCode() {
-        return this.appModel.isPassCodeRequired ? this.passCodeElement.value : "";
-    }
-
-    showUploadOutput(fileMeta) {
+    showImageOutput(fileMeta) {
         const urlBoxId = "input-" + Date.now().toString();
         const imgPreviewId = "img-" + Date.now().toString();
         const url = decodeURIComponent(fileMeta.url);
