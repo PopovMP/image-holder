@@ -84,6 +84,35 @@ function saveFile(fileName, fileContent, isOverrideExisting, host, callback) {
 }
 
 /**
+ * Deletes an image by filename and updates the DB
+ * @param {string} fileName
+ * @param {function} callback
+ */
+function deleteFile(fileName, callback) {
+    const filePath = path.join(__dirname, "public", settings.storagePath, fileName);
+
+    const isExistsDb = dbManager.isExists(fileName);
+
+    if (isExistsDb) {
+        const isExists = fs.existsSync(filePath);
+        if (isExists) {
+            fs.unlink(filePath, fs_unlink_ready);
+        }
+    } else {
+        callback(`There is no such record: ${fileName}.`, null);
+    }
+
+    function fs_unlink_ready(err) {
+        if (err) {
+            callback(err, null);
+        }
+
+        dbManager.remove(fileName);
+        callback(null, "File removed.");
+    }
+}
+
+/**
  * Gets the mime type from a base64 encoded image
  * @param {string} data - base64 encoded
  * @return {string}
@@ -119,5 +148,6 @@ function createHash(data) {
 }
 
 module.exports = {
-    saveFile: saveFile
+    saveFile: saveFile,
+    deleteFile: deleteFile
 };

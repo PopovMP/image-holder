@@ -66,7 +66,7 @@ function count() {
 }
 
 /**
- * Adds or updates a meta record in db by name and saves the db file.
+ * Adds or updates a meta record in DB by name and saves the DB file.
  * @param {ImageMeta} record
  */
 function addOrUpdate(record) {
@@ -83,6 +83,20 @@ function addOrUpdate(record) {
     dbContent.push(record);
 
     save();
+}
+
+/**
+ * Removes a record with the given name from DB
+ * @param fileName
+ */
+function remove(fileName) {
+    for (let i = dbContent.length - 1; i >= 0; i--) {
+        if (dbContent[i].name === fileName) {
+            dbContent.splice(i, 1);
+
+            save();
+        }
+    }
 }
 
 /**
@@ -105,5 +119,6 @@ module.exports = {
     find: find,
     get: get,
     isExists: isExists,
-    addOrUpdate: addOrUpdate
+    addOrUpdate: addOrUpdate,
+    remove: remove
 };
