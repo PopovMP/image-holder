@@ -28,8 +28,8 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use(bodyParser.urlencoded({extended: false}));
 
 app.use("/", viewsIndex);
-app.use("/api", apiUpload);
 app.use("/api", apiSearch);
+app.use("/api", apiUpload);
 app.use("/api", apiValidate);
 
 app.use(catchPageNotFound);

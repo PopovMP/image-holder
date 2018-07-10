@@ -5,6 +5,10 @@ const fs = require("fs");
 let dbFilePath;
 let dbContent = [];
 
+/**
+ * Loads a db file
+ * @param {string} dbPath
+ */
 function connect(dbPath) {
     dbFilePath = dbPath;
     const isExists = fs.existsSync(dbFilePath);
@@ -14,6 +18,13 @@ function connect(dbPath) {
     }
 }
 
+/**
+ * Searches an image by name
+ * @param {string} pattern - RegExp
+ * @param {number} start
+ * @param {number} count
+ * @return {ImageMeta[]}
+ */
 function find(pattern, start, count) {
     start = start || 0;
     count = count || dbContent.length - start;
@@ -26,12 +37,23 @@ function find(pattern, start, count) {
     return selection;
 }
 
+/**
+ * Gets if such image already exists
+ * @param {string} fileName
+ * @return {boolean}
+ */
 function isExists(fileName) {
     const isExits = dbContent.some(e => e.name === fileName);
 
     return isExits;
 }
 
+/**
+ * Gets images
+ * @param {number} start - start index
+ * @param {number} count - count of records
+ * @return {ImageMeta[]}
+ */
 function get(start, count) {
     start = start || 0;
     count = count || dbContent.length - start;
@@ -41,25 +63,30 @@ function get(start, count) {
     return selection;
 }
 
+/**
+ * Gets the count of the stored images.
+ * @return {number}
+ */
 function count() {
     return dbContent.length;
 }
 
+/**
+ * Inserts a meta record in db and saves.
+ * @param {ImageMeta} record
+ * @return {number}
+ */
 function insert(record) {
-    for (let i = 0; i < dbContent.length; i++) {
-        if (dbContent[i].hash === record.hash) {
-            dbContent[i] = record;
-            save();
-            return i;
-        }
-    }
-
     dbContent.push(record);
+
     save();
 
     return dbContent.length;
 }
 
+/**
+ * Stores the db file
+ */
 function save() {
     const dbText = JSON.stringify(dbContent);
     fs.writeFile(dbFilePath, dbText, "utf8", fs_writeFile_ready);
