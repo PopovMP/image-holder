@@ -11,7 +11,7 @@ html(lang="en")
       #data-import-field
         if viewModel.isPassCodeRequired
           form#form-pass-code
-            label(for="pass-code-element") Upload pass code:
+            label(for="pass-code-element") Access pass code:
             input#pass-code-element(type="password" autocomplete="off")
 
         input#data-import-input.hidden(type="file" accept="#{viewModel.acceptedFiles.join(',')}" multiple="multiple")
@@ -26,7 +26,7 @@ html(lang="en")
           label(for="override-existing-file") Override an existing file with the same name.
 
       form#form-search
-        label(for="input-search") Search image (JS RegExp):
+        label(for="input-search") Search images:
         input#input-search(type="text" autocomplete="off" style="margin-left: 10px")
 
       #output-content
