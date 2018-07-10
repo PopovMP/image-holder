@@ -22,8 +22,8 @@ html(lang="en")
           p Max file size - #{viewModel.maxFileSizeKb} kB.
 
         form#form-upload-options.hidden
-          input#override-existing-file(type="checkbox" name="override")
-          label(for="override-existing-file") Override an existing file with the same name.
+          input#checkbox-force-upload(type="checkbox" name="force-upload")
+          label(for="checkbox-force-upload") Force upload to proceed with duplicated files.
 
       form#form-search
         label(for="input-search") Search images:
@@ -36,4 +36,4 @@ html(lang="en")
 
     script(src="./js/app.js")
     script.
-      new Application(!{appModel});
+        new Application(!{appModel});

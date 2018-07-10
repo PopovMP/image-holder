@@ -10,7 +10,7 @@ router.post("/upload", uploadImage);
 function uploadImage(req, res) {
     const fileNameEncoded = req.header("FileName");
     const passCodeEncoded = req.header("PassCode");
-    const isOverrideExisting = req.header("OverrideExistingFile").toLowerCase() === "true";
+    const isForceUpload = req.header("ForceUpload").toLowerCase() === "true";
 
     const fileNameDecoded = decodeURIComponent(fileNameEncoded);
     const fileName = path.basename(fileNameDecoded);
@@ -39,7 +39,7 @@ function uploadImage(req, res) {
     function req_end() {
         if (fileContent) {
             const host = encodeURIComponent(req.headers.origin);
-            fileManager.saveFile(fileName, fileContent, isOverrideExisting, host, fileUpload_ready);
+            fileManager.saveFile(fileName, fileContent, isForceUpload, host, fileUpload_ready);
         } else {
             res.json({err: "Error with receiving content!", data: null});
         }

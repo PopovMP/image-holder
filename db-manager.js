@@ -35,14 +35,25 @@ function find(pattern, start, count) {
 }
 
 /**
- * Gets if such image already exists
+ * Gets if such image name already exists
  * @param {string} fileName
  * @return {boolean}
  */
-function isExists(fileName) {
-    const isExits = dbContent.some(e => e.name === fileName);
+function isNameExists(fileName) {
+    const isNameExists = dbContent.some(e => e.name === fileName);
 
-    return isExits;
+    return isNameExists;
+}
+
+/**
+ * Gets if such image content already exists
+ * @param {string} fileHash
+ * @return {boolean}
+ */
+function isHashExists(fileHash) {
+    const isHashExists = dbContent.some(e => e.hash === fileHash);
+
+    return isHashExists;
 }
 
 /**
@@ -118,7 +129,8 @@ module.exports = {
     connect: connect,
     find: find,
     get: get,
-    isExists: isExists,
+    isNameExists: isNameExists,
+    isHashExists: isHashExists,
     addOrUpdate: addOrUpdate,
     remove: remove
 };

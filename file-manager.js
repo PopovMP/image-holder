@@ -23,11 +23,11 @@ dbManager.connect(metaFilePath);
  * Saves an image
  * @param {string} fileName
  * @param {string} fileContent - base64 encoded
- * @param {boolean} isOverrideExisting
+ * @param {boolean} isForceUpload
  * @param {string} host
  * @param {function} callback
  */
-function saveFile(fileName, fileContent, isOverrideExisting, host, callback) {
+function saveFile(fileName, fileContent, isForceUpload, host, callback) {
     const dataType = getImageType(fileContent);
 
     if (settings.acceptedFiles.indexOf(dataType) === -1) {
@@ -44,9 +44,17 @@ function saveFile(fileName, fileContent, isOverrideExisting, host, callback) {
         return;
     }
 
-    const isExists = dbManager.isExists(fileName);
-    if (isExists && !isOverrideExisting) {
-        const errorMessage = `Such file already exists! Use the "Override option", if you really want to replace the file.`;
+    const isNameExists = dbManager.isNameExists(fileName);
+    if (isNameExists && !isForceUpload) {
+        const errorMessage = "Such file already exists! Use the \"Force upload\" option, if you really want to replace the file.";
+        callback(errorMessage, null);
+        return;
+    }
+
+    const fileHash = createHash(imageBuffer);
+    const isHashExists = dbManager.isHashExists(fileHash);
+    if (isHashExists && !isForceUpload) {
+        const errorMessage = "Such image is already uploaded under different name! Use the \"Force upload\" option, if you really want to upload it again.";
         callback(errorMessage, null);
         return;
     }
@@ -65,7 +73,6 @@ function saveFile(fileName, fileContent, isOverrideExisting, host, callback) {
         }
 
         const fileUrl = path.join(host, settings.storagePath, fileName);
-        const fileHash = createHash(imageBuffer);
         const time = new Date().getTime();
 
         /** {ImageMeta} */
@@ -91,7 +98,7 @@ function saveFile(fileName, fileContent, isOverrideExisting, host, callback) {
 function deleteFile(fileName, callback) {
     const filePath = path.join(__dirname, "public", settings.storagePath, fileName);
 
-    const isExistsDb = dbManager.isExists(fileName);
+    const isExistsDb = dbManager.isNameExists(fileName);
 
     if (isExistsDb) {
         const isExists = fs.existsSync(filePath);

@@ -59,7 +59,7 @@ class Application {
         const headers = [
             {header: "PassCode", value: encodedPassCode},
             {header: "FileName", value: encodedFileName},
-            {header: "OverrideExistingFile", value: optionsModel.isOverrideExisting},
+            {header: "ForceUpload", value: optionsModel.isForceUpload},
             {header: "Content-type", value: "multipart/form-data"}
         ];
 
@@ -155,7 +155,7 @@ class ApplicationPresenter {
             this.showUploadControls();
         }
 
-        this.optionOverrideExistingFile = document.getElementById("override-existing-file");
+        this.checkboxForceUpload = document.getElementById("checkbox-force-upload");
 
         this.formSearch = document.getElementById("form-search");
         this.inputSearch = document.getElementById("input-search");
@@ -170,7 +170,7 @@ class ApplicationPresenter {
 
         const optionsModel = {
             passCode: passCode,
-            isOverrideExisting: this.optionOverrideExistingFile.checked
+            isForceUpload: this.checkboxForceUpload.checked
         };
 
         return optionsModel;
