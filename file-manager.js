@@ -77,7 +77,7 @@ function saveFile(fileName, fileContent, isOverrideExisting, host, callback) {
             time: time
         };
 
-        dbManager.insert(fileMeta);
+        dbManager.addOrUpdate(fileMeta);
 
         callback(null, fileMeta);
     }

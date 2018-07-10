@@ -26,9 +26,6 @@ function connect(dbPath) {
  * @return {ImageMeta[]}
  */
 function find(pattern, start, count) {
-    start = start || 0;
-    count = count || dbContent.length - start;
-
     const regExp = new RegExp(pattern, "i");
     const selection = dbContent
         .filter(record => regExp.test(record.name))
@@ -55,9 +52,6 @@ function isExists(fileName) {
  * @return {ImageMeta[]}
  */
 function get(start, count) {
-    start = start || 0;
-    count = count || dbContent.length - start;
-
     const selection = dbContent.slice(start, count);
 
     return selection;
@@ -72,16 +66,23 @@ function count() {
 }
 
 /**
- * Inserts a meta record in db and saves.
+ * Adds or updates a meta record in db by name and saves the db file.
  * @param {ImageMeta} record
- * @return {number}
  */
-function insert(record) {
+function addOrUpdate(record) {
+    for (let i = 0; i < dbContent.length; i++) {
+        if (dbContent[i].name === record.name) {
+            dbContent[i] = record;
+
+            save();
+
+            return;
+        }
+    }
+
     dbContent.push(record);
 
     save();
-
-    return dbContent.length;
 }
 
 /**
@@ -104,5 +105,5 @@ module.exports = {
     find: find,
     get: get,
     isExists: isExists,
-    insert: insert
+    addOrUpdate: addOrUpdate
 };
