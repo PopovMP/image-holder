@@ -13,6 +13,7 @@ class Application {
         this.presenter = new ApplicationPresenter(this.appModel);
         this.presenter.searchImage = this.presenter_searchImage_submit.bind(this);
         this.presenter.passCodeSubmit = this.presenter_passCode_submit.bind(this);
+        this.presenter.deleteImage = this.presenter_deleteImage_click.bind(this);
 
         this.showImages(appModel.preloadModel);
     }
@@ -114,12 +115,34 @@ class Application {
             }
         }
     }
+
+    presenter_deleteImage_click(fileName) {
+        const optionsModel = this.presenter.getSubmitOptions();
+        const encodedPassCode = encodeURIComponent(optionsModel.passCode);
+        const encodedFileName = encodeURIComponent(fileName);
+
+        const headers = [
+            {header: "PassCode", value: encodedPassCode},
+            {header: "FileName", value: encodedFileName},
+        ];
+
+        IoService.postData("api/delete", {}, headers, this.deleteFile_ready.bind(this))
+    }
+
+    deleteFile_ready(err, data) {
+        if (err) {
+            this.presenter.showError("Error with delete image: " + err);
+        } else {
+            this.presenter.showInfo(data);
+        }
+    }
 }
 
 class ApplicationPresenter {
     constructor(appModel) {
         this.searchImage = null;
         this.passCodeSubmit = null;
+        this.deleteImage = null;
         this.idIndex = 999;
 
         this.appModel = appModel;
@@ -160,17 +183,19 @@ class ApplicationPresenter {
     }
 
     showImageOutput(fileMeta) {
-        const urlBoxId = `input-${++this.idIndex}`;
-        const imgPreviewId = `img-${++this.idIndex}`;
+        const idIndex = ++this.idIndex;
+        const urlBoxId = `input-${idIndex}`;
+        const imgPreviewId = `img-${idIndex}`;
+        const delId = `dell-${idIndex}`;
+
         const url = decodeURIComponent(fileMeta.url);
         const time = new Date(fileMeta.time).toLocaleString();
 
         const messageElement =
             `<div class="message url-filed">
-                <h3>${fileMeta.name}</h3>
-                <p>
-                    Size: ${fileMeta.size} kB, uploaded at: ${time}
-                </p>
+                <a id="${delId}" href="#" class="delete-button" title="Delete image">x</a>
+                <h3 class="image-box-header">${fileMeta.name}</h3>
+                <p>Size: ${fileMeta.size} kB, uploaded at: ${time}</p>
                 <a href="${url}" target="_blank"><img id="${imgPreviewId}" class="image-preview" src="" alt="Image preview" /></a>
                 <br />
                 <input class="url-input" type="text" value="${url}" id="${urlBoxId}" />
@@ -183,10 +208,18 @@ class ApplicationPresenter {
 
         const imagePreview = document.getElementById(imgPreviewId);
         imagePreview["src"] = url;
+
+        const deleteButton = document.getElementById(delId);
+        deleteButton.addEventListener("click", this.image_delete_click.bind(this, fileMeta.name));
     }
 
     clearOutput() {
         this.outputContent.innerHTML = "";
+    }
+
+    showInfo(message) {
+        const messageElement = `<div class="message info">${message}</div>`;
+        this.outputContent.insertAdjacentHTML("afterbegin", messageElement);
     }
 
     showError(errorMessage) {
@@ -214,6 +247,17 @@ class ApplicationPresenter {
         if (typeof this.passCodeSubmit === "function") {
             const passCode = this.inputPassCode.value;
             this.passCodeSubmit(passCode);
+        }
+    }
+
+    image_delete_click(fileName) {
+        event.preventDefault();
+
+        const isDelete = confirm(`Are you sure you want to permanently delete the "${fileName}" file?`);
+        if (isDelete) {
+            if (typeof this.deleteImage === "function") {
+                this.deleteImage(fileName);
+            }
         }
     }
 }

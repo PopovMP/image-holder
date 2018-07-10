@@ -108,7 +108,7 @@ function deleteFile(fileName, callback) {
         }
 
         dbManager.remove(fileName);
-        callback(null, "File removed.");
+        callback(null, `Image deleted: ${fileName}.`);
     }
 }
 
