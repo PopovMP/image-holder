@@ -7,13 +7,17 @@ License: MIT
 ## Features
 
  - Image Holder is a self hosted app on node.js
- - It provides a Drag / Drop images upload.
- - It stores the files in a public local folder.
- - It may require a pass key for an upload (set in the server's settings).
- - It shows teh latest images preview on load.
- - RegExp search through all uploaded images.
- 
- ![Screnshot](https://image-holder.forexsb.com/store/image-holder-screenshot.png)
+ - it provides a Drag / Drop images upload.
+ - it stores the files in a public local folder.
+ - it may require a pass key for an upload (set in the server's settings).
+ - it shows teh latest images preview on load.
+ - it has a RegExp search through all uploaded images.
+ - it manages duplicated files.
+ - it validates the image size, file extension and the mime type.
+
+Image Holder in action: https://image-holder.forexsb.com/
+
+![Screnshot](https://image-holder.forexsb.com/store/image-holder-screenshot.png)
 
 ## Requirements
 
@@ -35,6 +39,7 @@ settings.json
   "port": 8080,
   "storagePath": "store",
   "metaFilePath": "db/meta.json",
+  "maxSearchCount": 20,
   "showLastImages": 20
 }
 ```
