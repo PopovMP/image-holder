@@ -10,5 +10,8 @@
   "storagePath": "store",
   "metaFilePath": "db/meta.json",
   "maxSearchCount": 20,
-  "showLastImages": 20
+  "showLastImages": 20,
+  "thumbnailPattern": "[URL=img-url][IMG]thumb-url[/IMG][/URL]",
+  "thumbnailWidth": 300,
+  "thumbnailHeight": 200
 }

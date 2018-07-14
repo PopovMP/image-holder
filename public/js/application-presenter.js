@@ -1,13 +1,14 @@
 "use strict";
 
 class ApplicationPresenter {
-    constructor(isPassCodeRequired) {
+    constructor(thumbnailPattern, isPassCodeRequired) {
         this.searchImage = null;
         this.passCodeSubmit = null;
         this.deleteImage = null;
         this.idIndex = 0;
 
         this.isPassCodeRequired = isPassCodeRequired;
+        this.thumbnailPattern = thumbnailPattern;
 
         if (this.isPassCodeRequired) {
             this.formPassCode = document.getElementById("form-pass-code");
@@ -38,19 +39,57 @@ class ApplicationPresenter {
     }
 
     showUploadControls() {
-        document.getElementById("form-pass-code").classList.add("hidden");
+        if (this.isPassCodeRequired) {
+            document.getElementById("form-pass-code").classList.add("hidden");
+        }
         document.getElementById("data-import-dropzone").classList.remove("hidden");
         document.getElementById("form-upload-options").classList.remove("hidden");
     }
 
+    scaleImage(imageData, callback) {
+        const canvas = document.getElementById("thumbnail-canvas");
+        const context = canvas.getContext("2d");
+
+        const imageObj = new Image();
+        imageObj.addEventListener("load", imageLoaded);
+        imageObj.src = imageData;
+
+        function imageLoaded() {
+            let imageAspectRatio = imageObj.width / imageObj.height;
+            let canvasAspectRatio = canvas.width / canvas.height;
+            let scaledHeight, scaledWidth, xStart, yStart;
+
+            if (imageAspectRatio < canvasAspectRatio) {
+                scaledHeight = canvas.height;
+                scaledWidth = imageObj.width * (scaledHeight / imageObj.height);
+                xStart = (canvas.width - scaledWidth) / 2;
+                yStart = 0;
+            } else if (imageAspectRatio > canvasAspectRatio) {
+                scaledWidth = canvas.width;
+                scaledHeight = imageObj.height * (scaledWidth / imageObj.width);
+                xStart = 0;
+                yStart = (canvas.height - scaledHeight) / 2;
+            } else {
+                scaledHeight = canvas.height;
+                scaledWidth = canvas.width;
+                xStart = 0;
+                yStart = 0;
+            }
+            context.drawImage(imageObj, xStart, yStart, scaledWidth, scaledHeight);
+            const thumbData = canvas.toDataURL();
+
+            callback(thumbData);
+        }
+    }
+
     showImageOutput(fileMeta) {
         const idIndex = ++this.idIndex;
-        const urlBoxId = `input-${idIndex}`;
         const imgPreviewId = `img-${idIndex}`;
         const delId = `dell-${idIndex}`;
 
         const url = decodeURIComponent(fileMeta.url);
         const time = new Date(fileMeta.time).toLocaleString();
+        const thumbnailCode = fileMeta.thumbUrl ? this.getThumbnailCode(fileMeta) : "";
 
         const messageElement =
             `<div class="message url-filed">
@@ -59,19 +98,25 @@ class ApplicationPresenter {
                 <p>Size: ${fileMeta.size} kB, uploaded at: ${time}</p>
                 <a href="${url}" target="_blank"><img id="${imgPreviewId}" class="image-preview" src="" alt="Image preview" /></a>
                 <br />
-                <input class="url-input" type="text" value="${url}" id="${urlBoxId}" />
+                <input class="url-input" type="text" value="${url}" />
+                ${thumbnailCode}
             </div>`;
 
         this.outputContent.insertAdjacentHTML("afterbegin", messageElement);
-
-        const urlBox = document.getElementById(urlBoxId);
-        urlBox.select();
 
         const imagePreview = document.getElementById(imgPreviewId);
         imagePreview["src"] = url;
 
         const deleteButton = document.getElementById(delId);
         deleteButton.addEventListener("click", this.image_delete_click.bind(this, fileMeta.name));
+    }
+
+    getThumbnailCode(fileMeta) {
+        const url = decodeURIComponent(fileMeta.url);
+        const thumbUrl = decodeURIComponent(fileMeta.thumbUrl);
+        const code = this.thumbnailPattern.replace("img-url", url).replace("thumb-url", thumbUrl);
+        const html = `<br /><input class="url-input" type="text" value="${code}" />`;
+        return html;
     }
 
     clearOutput() {

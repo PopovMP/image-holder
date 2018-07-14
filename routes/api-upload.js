@@ -32,16 +32,21 @@ function uploadImage(req, res) {
         return;
     }
 
-    let fileContent = "";
-    req.on("data", chunk => fileContent += chunk);
+    let uploadData = "";
+    req.on("data", chunk => uploadData += chunk);
     req.on("end", req_end);
 
     function req_end() {
-        if (fileContent) {
-            const host = encodeURIComponent(req.headers.origin);
-            fileManager.saveFile(fileName, fileContent, isForceUpload, host, fileUpload_ready);
-        } else {
-            res.json({err: "Error with receiving content!", data: null});
+        try {
+            const data = JSON.parse(uploadData);
+            if (data.image && data.thumbnail) {
+                const host = encodeURIComponent(req.headers.origin);
+                fileManager.saveFile(fileName, data.image, data.thumbnail, isForceUpload, host, fileUpload_ready);
+            } else {
+                res.json({err: "Error with receiving content!", data: null});
+            }
+        } catch (e) {
+            res.json({err: e, data: null});
         }
     }
 

@@ -11,6 +11,9 @@ router.get("/", function (req, res) {
         acceptedFiles: settings.acceptedFiles,
         isPassCodeRequired: !!settings.passCode,
         maxFileSizeKb: settings.maxFileSizeKb,
+        thumbnailPattern: settings.thumbnailPattern,
+        thumbnailWidth: settings.thumbnailWidth,
+        thumbnailHeight: settings.thumbnailHeight,
         preloadModel: preloadModel
     };
 

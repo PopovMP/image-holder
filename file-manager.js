@@ -14,6 +14,7 @@ dbManager.connect(metaFilePath);
  * @typedef {object} ImageMeta
  * @property {string} name - image file name
  * @property {string} url - permanent link
+ * @property {string} thumbUrl - thumbnail permanent link
  * @property {number} size - file size in kB
  * @property {string} hash - image content hash code
  * @property {number} time - time of upload
@@ -22,20 +23,22 @@ dbManager.connect(metaFilePath);
 /**
  * Saves an image
  * @param {string} fileName
- * @param {string} fileContent - base64 encoded
+ * @param {string} imageData - base64 encoded
+ * @param {string} thumbnailData - base64 encoded
  * @param {boolean} isForceUpload
  * @param {string} host
  * @param {function} callback
  */
-function saveFile(fileName, fileContent, isForceUpload, host, callback) {
-    const dataType = getImageType(fileContent);
+function saveFile(fileName, imageData, thumbnailData, isForceUpload, host, callback) {
+
+    const dataType = getImageType(imageData);
 
     if (settings.acceptedFiles.indexOf(dataType) === -1) {
         callback("Not supported file type.", null);
         return;
     }
 
-    const imageBuffer = decodeImageContentToBuffer(fileContent);
+    const imageBuffer = decodeImageContentToBuffer(imageData);
     const fileSizeKb = Math.round(100 * imageBuffer.byteLength / 1024) / 100;
 
     if (fileSizeKb > settings.maxFileSizeKb) {
@@ -59,26 +62,44 @@ function saveFile(fileName, fileContent, isForceUpload, host, callback) {
         return;
     }
 
-    const filePath = path.join(__dirname, "public", settings.storagePath, fileName);
+    const thumbnailFileName = getThumbnailFileName(fileName);
+    const imagePath = path.join(__dirname, "public", settings.storagePath, fileName);
+    const thumbnailPath = path.join(__dirname, "public", settings.storagePath, thumbnailFileName);
 
-    fs.writeFile(filePath, imageBuffer, fs_writeFile_ready);
+    fs.writeFile(imagePath, imageBuffer, fs_writeImage_ready);
 
     /**
      * @param {string} err
      */
-    function fs_writeFile_ready(err) {
+    function fs_writeImage_ready(err) {
+        if (err) {
+            callback(err, null);
+            return;
+        }
+
+        const thumbBuffer = decodeImageContentToBuffer(thumbnailData);
+
+        fs.writeFile(thumbnailPath, thumbBuffer, fs_writeThumbnail_ready);
+    }
+
+    /**
+     * @param {string} err
+     */
+    function fs_writeThumbnail_ready(err) {
         if (err) {
             callback(err, null);
             return;
         }
 
         const fileUrl = path.join(host, settings.storagePath, fileName);
+        const thumbUrl = path.join(host, settings.storagePath, thumbnailFileName);
         const time = new Date().getTime();
 
         /** {ImageMeta} */
         const fileMeta = {
             name: fileName,
             url: fileUrl,
+            thumbUrl: thumbUrl,
             size: fileSizeKb,
             hash: fileHash,
             time: time
@@ -103,18 +124,32 @@ function deleteFile(fileName, callback) {
     if (isExistsDb) {
         const isExists = fs.existsSync(filePath);
         if (isExists) {
-            fs.unlink(filePath, fs_unlink_ready);
+            fs.unlink(filePath, imageUnlink_ready);
         }
     } else {
         callback(`There is no such record: ${fileName}.`, null);
     }
 
-    function fs_unlink_ready(err) {
+    function imageUnlink_ready(err) {
         if (err) {
             callback(err, null);
         }
 
         dbManager.remove(fileName);
+
+        const thumbPath = getThumbnailFileName(filePath);
+        const isThumbExists = fs.existsSync(thumbPath);
+        if (isThumbExists) {
+            fs.unlink(thumbPath, thumbUnlink_ready);
+        } else {
+            callback(null, `Image deleted: ${fileName}.`);
+        }
+    }
+
+    function thumbUnlink_ready(err) {
+        if (err) {
+            callback(err, null);
+        }
         callback(null, `Image deleted: ${fileName}.`);
     }
 }
@@ -127,6 +162,15 @@ function deleteFile(fileName, callback) {
 function getImageType(data) {
     const match = data.match(/^data:image\/(\w+);base64,/);
     return match[1];
+}
+
+/**
+ * @param {string} imageName
+ */
+function getThumbnailFileName(imageName) {
+    const parsedPath = path.parse(imageName);
+    const thumbnailName = `${parsedPath.name}-thumb${parsedPath.ext}`;
+    return thumbnailName;
 }
 
 /**

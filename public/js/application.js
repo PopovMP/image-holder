@@ -10,7 +10,7 @@ class Application {
         this.dropper.warningOccurred = this.dropper_warningOccurred.bind(this);
         this.dropper.errorOccurred = this.dropper_errorOccurred.bind(this);
 
-        this.presenter = new ApplicationPresenter(this.appModel.isPassCodeRequired);
+        this.presenter = new ApplicationPresenter(this.appModel.thumbnailPattern, this.appModel.isPassCodeRequired);
         this.presenter.searchImage = this.presenter_searchImage_submit.bind(this);
         this.presenter.passCodeSubmit = this.presenter_passCode_submit.bind(this);
         this.presenter.deleteImage = this.presenter_deleteImage_click.bind(this);
@@ -38,7 +38,11 @@ class Application {
             return;
         }
 
-        this.uploadFile(fileName, image);
+        this.presenter.scaleImage(image, this.presenter_scaleImage_ready.bind(this, fileName, image));
+    }
+
+    presenter_scaleImage_ready(fileName, image, thumbnail) {
+        this.uploadFile(fileName, image, thumbnail);
     }
 
     dropper_warningOccurred(fileName, warningMessage) {
@@ -51,7 +55,7 @@ class Application {
         this.presenter.showError(message)
     }
 
-    uploadFile(fileName, image) {
+    uploadFile(fileName, image, thumbnail) {
         const optionsModel = this.presenter.getSubmitOptions();
         const encodedPassCode = encodeURIComponent(optionsModel.passCode);
         const encodedFileName = encodeURIComponent(fileName);
@@ -63,7 +67,10 @@ class Application {
             {header: "Content-type", value: "multipart/form-data"}
         ];
 
-        IoService.postData("api/upload", image, headers, this.uploadFile_ready.bind(this))
+        const uploadData = {image: image, thumbnail: thumbnail};
+        const encodedData = JSON.stringify(uploadData);
+
+        IoService.postData("api/upload", encodedData, headers, this.uploadFile_ready.bind(this))
     }
 
     uploadFile_ready(err, fileMeta) {
