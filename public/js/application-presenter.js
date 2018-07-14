@@ -47,6 +47,8 @@ class ApplicationPresenter {
     }
 
     scaleImage(imageData, maxWidth, maxHeight, callback) {
+        const mimeType = this.getImageMimeType(imageData);
+
         const htmlImage = new Image();
         htmlImage.addEventListener("load", imageLoaded);
         htmlImage.src = imageData;
@@ -65,10 +67,16 @@ class ApplicationPresenter {
 
             context.drawImage(htmlImage, 0, 0, width, height);
 
-            const thumbData = canvas.toDataURL();
+            const thumbData = canvas.toDataURL(mimeType);
 
             callback(thumbData);
         }
+    }
+
+    getImageMimeType(imageData) {
+        const match = imageData.match(/data:(.*);base64/);
+        const mimeType = match && match.length === 2 ? match[1] : "";
+        return mimeType;
     }
 
     showImageOutput(fileMeta) {
