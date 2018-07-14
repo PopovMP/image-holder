@@ -81,6 +81,7 @@ class ApplicationPresenter {
 
     showImageOutput(fileMeta) {
         const idIndex = ++this.idIndex;
+        const messageBoxId = `message-${idIndex}`;
         const imgPreviewId = `img-${idIndex}`;
         const delId = `dell-${idIndex}`;
 
@@ -89,7 +90,7 @@ class ApplicationPresenter {
         const thumbnailCode = fileMeta.thumbUrl ? this.getThumbnailCode(fileMeta) : "";
 
         const messageElement =
-            `<div class="message url-filed">
+            `<div class="message url-filed" id="${messageBoxId}">
                 <a id="${delId}" href="#" class="delete-button" title="Delete image">x</a>
                 <h3 class="image-box-header">${fileMeta.name}</h3>
                 <p>Size: ${fileMeta.size} kB, uploaded at: ${time}</p>
@@ -105,7 +106,7 @@ class ApplicationPresenter {
         imagePreview["src"] = url;
 
         const deleteButton = document.getElementById(delId);
-        deleteButton.addEventListener("click", this.image_delete_click.bind(this, fileMeta.name));
+        deleteButton.addEventListener("click", this.image_delete_click.bind(this, fileMeta.name, messageBoxId));
     }
 
     getThumbnailCode(fileMeta) {
@@ -153,13 +154,15 @@ class ApplicationPresenter {
         }
     }
 
-    image_delete_click(fileName) {
+    image_delete_click(fileName, messageBoxId) {
         event.preventDefault();
 
         const isDelete = confirm(`Are you sure you want to permanently delete the "${fileName}" file?`);
         if (isDelete) {
             if (typeof this.deleteImage === "function") {
                 this.deleteImage(fileName);
+
+                document.getElementById(messageBoxId).remove();
             }
         }
     }
