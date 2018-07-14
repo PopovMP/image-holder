@@ -18,10 +18,15 @@ class Application {
         this.showImages(appModel.preloadModel);
     }
 
-    showImages(preloadModel) {
+    showImages(imageMetaList) {
         this.presenter.clearOutput();
 
-        const sortedModel = preloadModel.sort((a, b) => a.time - b.time);
+        if (imageMetaList.length === 0) {
+            this.presenter.showWarning("No images found.");
+            return;
+        }
+
+        const sortedModel = imageMetaList.sort((a, b) => a.time - b.time);
 
         for (const model of sortedModel) {
             this.presenter.showImageOutput(model);
