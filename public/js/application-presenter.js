@@ -46,36 +46,25 @@ class ApplicationPresenter {
         document.getElementById("form-upload-options").classList.remove("hidden");
     }
 
-    scaleImage(imageData, callback) {
-        const canvas = document.getElementById("thumbnail-canvas");
-        const context = canvas.getContext("2d");
-
-        const imageObj = new Image();
-        imageObj.addEventListener("load", imageLoaded);
-        imageObj.src = imageData;
+    scaleImage(imageData, maxWidth, maxHeight, callback) {
+        const htmlImage = new Image();
+        htmlImage.addEventListener("load", imageLoaded);
+        htmlImage.src = imageData;
 
         function imageLoaded() {
-            let imageAspectRatio = imageObj.width / imageObj.height;
-            let canvasAspectRatio = canvas.width / canvas.height;
-            let scaledHeight, scaledWidth, xStart, yStart;
+            const srcRatio = htmlImage.width / htmlImage.height;
+            const maxRatio = maxWidth / maxHeight;
+            const width = srcRatio < maxRatio ? Math.round(htmlImage.width * maxHeight / htmlImage.height) : maxWidth;
+            const height = srcRatio > maxRatio ? Math.round(htmlImage.height * maxWidth / htmlImage.width) : maxHeight;
 
-            if (imageAspectRatio < canvasAspectRatio) {
-                scaledHeight = canvas.height;
-                scaledWidth = imageObj.width * (scaledHeight / imageObj.height);
-                xStart = (canvas.width - scaledWidth) / 2;
-                yStart = 0;
-            } else if (imageAspectRatio > canvasAspectRatio) {
-                scaledWidth = canvas.width;
-                scaledHeight = imageObj.height * (scaledWidth / imageObj.width);
-                xStart = 0;
-                yStart = (canvas.height - scaledHeight) / 2;
-            } else {
-                scaledHeight = canvas.height;
-                scaledWidth = canvas.width;
-                xStart = 0;
-                yStart = 0;
-            }
-            context.drawImage(imageObj, xStart, yStart, scaledWidth, scaledHeight);
+            const canvas = document.createElement("canvas");
+            canvas.width = width;
+            canvas.height = height;
+
+            const context = canvas.getContext("2d");
+
+            context.drawImage(htmlImage, 0, 0, width, height);
+
             const thumbData = canvas.toDataURL();
 
             callback(thumbData);

@@ -38,7 +38,8 @@ class Application {
             return;
         }
 
-        this.presenter.scaleImage(image, this.presenter_scaleImage_ready.bind(this, fileName, image));
+        this.presenter.scaleImage(image, this.appModel.thumbnailWidth, this.appModel.thumbnailHeight,
+            this.presenter_scaleImage_ready.bind(this, fileName, image));
     }
 
     presenter_scaleImage_ready(fileName, image, thumbnail) {

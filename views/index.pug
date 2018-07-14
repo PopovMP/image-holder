@@ -1,5 +1,3 @@
-- const canvasStyle = `width: ${viewModel.thumbnailWidth}px; height: ${viewModel.thumbnailHeight}px;`;
-
 doctype html
 html(lang="en")
   head
@@ -30,8 +28,6 @@ html(lang="en")
       form#form-search
         label(for="input-search") Search images:
         input#input-search(type="text" autocomplete="off" style="margin-left: 10px")
-
-      canvas#thumbnail-canvas.hidden(style=canvasStyle)
 
       #output-content
 
