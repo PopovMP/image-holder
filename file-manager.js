@@ -137,7 +137,8 @@ function deleteFile(fileName, callback) {
 
         dbManager.remove(fileName);
 
-        const thumbPath = getThumbnailFileName(filePath);
+        const thumbName = getThumbnailFileName(fileName);
+        const thumbPath = path.join(__dirname, "public", settings.storagePath, thumbName);
         const isThumbExists = fs.existsSync(thumbPath);
         if (isThumbExists) {
             fs.unlink(thumbPath, thumbUnlink_ready);
