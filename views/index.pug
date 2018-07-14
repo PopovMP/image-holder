@@ -3,9 +3,13 @@ html(lang="en")
   head
     meta(charset="utf-8")
     title Image Holder
-    link(rel="stylesheet" href="./css/style.css?v=1.4")
+    link(rel="stylesheet" href="./css/style.css?v=1.5")
   body
     #wrapper
+      form#form-search(style="float: right")
+        label(for="input-search") Search:
+        input#input-search(type="text" autocomplete="off" style="margin-left: 10px")
+
       h1 Image Holder
 
       #data-import-field
@@ -21,13 +25,9 @@ html(lang="en")
           p Accepted file types: #{viewModel.acceptedFiles.join(", ")}.
           p Max file size - #{viewModel.maxFileSizeKb} kB.
 
-        form#form-upload-options.hidden
+        form#form-upload-options.hidden(style="margin-top: 20px;")
           input#checkbox-force-upload(type="checkbox" name="force-upload")
           label(for="checkbox-force-upload") Force upload to proceed with duplicated files.
-
-      form#form-search
-        label(for="input-search") Search images:
-        input#input-search(type="text" autocomplete="off" style="margin-left: 10px")
 
       #output-content
 
