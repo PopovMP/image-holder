@@ -122,18 +122,38 @@ class ApplicationPresenter {
     }
 
     showInfo(message) {
-        const messageElement = `<div class="message info">${message}</div>`;
-        this.outputContent.insertAdjacentHTML("afterbegin", messageElement);
+        this.showMessage(message, "info");
     }
 
-    showWarning(warningMessage) {
-        const messageElement = `<div class="message warning">${warningMessage}</div>`;
-        this.outputContent.insertAdjacentHTML("afterbegin", messageElement);
+    showWarning(message) {
+        this.showMessage(message, "warning");
     }
 
-    showError(errorMessage) {
-        const messageElement = `<div class="message error">${errorMessage}</div>`;
+    showError(message) {
+        this.showMessage(message, "error");
+    }
+
+    showMessage(message, tag) {
+        const idIndex = ++this.idIndex;
+        const messageBoxId = `message-${idIndex}`;
+        const delId = `dell-${idIndex}`;
+
+        const messageElement =
+            `<div class="message ${tag}" id="${messageBoxId}">
+                <a id="${delId}" href="#" class="delete-button" title="Remove message">x</a>
+                <p style="margin: 0">${message}</p>
+            </div>`;
+
         this.outputContent.insertAdjacentHTML("afterbegin", messageElement);
+
+        const deleteButton = document.getElementById(delId);
+        deleteButton.addEventListener("click", removeMessage_click.bind(this, messageBoxId));
+
+        function removeMessage_click(messageBoxId, event) {
+            event.preventDefault();
+
+            document.getElementById(messageBoxId).remove();
+        }
     }
 
     formSearch_submit(event) {
@@ -154,14 +174,13 @@ class ApplicationPresenter {
         }
     }
 
-    image_delete_click(fileName, messageBoxId) {
+    image_delete_click(fileName, messageBoxId, event) {
         event.preventDefault();
 
         const isDelete = confirm(`Are you sure you want to permanently delete the "${fileName}" file?`);
         if (isDelete) {
             if (typeof this.deleteImage === "function") {
                 this.deleteImage(fileName);
-
                 document.getElementById(messageBoxId).remove();
             }
         }
