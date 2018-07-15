@@ -129,7 +129,7 @@ class Application {
         }
     }
 
-    presenter_deleteImage_click(fileName) {
+    presenter_deleteImage_click(fileName, messageBoxId) {
         const optionsModel = this.presenter.getSubmitOptions();
         const encodedPassCode = encodeURIComponent(optionsModel.passCode);
         const encodedFileName = encodeURIComponent(fileName);
@@ -139,14 +139,15 @@ class Application {
             {header: "FileName", value: encodedFileName},
         ];
 
-        IoService.postData("api/delete", {}, headers, this.deleteFile_ready.bind(this))
+        IoService.postData("api/delete", {}, headers, this.deleteFile_ready.bind(this, messageBoxId))
     }
 
-    deleteFile_ready(err, data) {
+    deleteFile_ready(messageBoxId, err, data) {
         if (err) {
             this.presenter.showError("Error with delete image: " + err);
         } else {
             this.presenter.showInfo(data);
+            this.presenter.removeMessageBox(messageBoxId);
         }
     }
 }

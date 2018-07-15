@@ -28,10 +28,8 @@ class ApplicationPresenter {
     }
 
     getSubmitOptions() {
-        const passCode = this.isPassCodeRequired ? this.inputPassCode.value : "";
-
         const optionsModel = {
-            passCode: passCode,
+            passCode: this.isPassCodeRequired ? this.inputPassCode.value : "",
             isForceUpload: this.checkboxForceUpload.checked
         };
 
@@ -147,13 +145,11 @@ class ApplicationPresenter {
         this.outputContent.insertAdjacentHTML("afterbegin", messageElement);
 
         const deleteButton = document.getElementById(delId);
-        deleteButton.addEventListener("click", removeMessage_click.bind(this, messageBoxId));
+        deleteButton.addEventListener("click", this.removeMessage_click.bind(this, messageBoxId));
+    }
 
-        function removeMessage_click(messageBoxId, event) {
-            event.preventDefault();
-
-            document.getElementById(messageBoxId).remove();
-        }
+    removeMessageBox(messageBoxId) {
+        document.getElementById(messageBoxId).remove();
     }
 
     formSearch_submit(event) {
@@ -180,9 +176,14 @@ class ApplicationPresenter {
         const isDelete = confirm(`Are you sure you want to permanently delete the "${fileName}" file?`);
         if (isDelete) {
             if (typeof this.deleteImage === "function") {
-                this.deleteImage(fileName);
-                document.getElementById(messageBoxId).remove();
+                this.deleteImage(fileName, messageBoxId);
             }
         }
+    }
+
+    removeMessage_click(messageBoxId, event) {
+        event.preventDefault();
+
+        this.removeMessageBox(messageBoxId);
     }
 }
