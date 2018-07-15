@@ -1,3 +1,5 @@
+- const acceptedExtensionsList = viewModel.acceptedFiles.map(function (e){return "." + e}).join(',');
+
 doctype html
 html(lang="en")
   head
@@ -18,7 +20,7 @@ html(lang="en")
             label(for="pass-code-element") Access pass code:
             input#pass-code-element(type="password" autocomplete="off")
 
-        input#data-import-input.hidden(type="file" accept="#{viewModel.acceptedFiles.join(',')}" multiple="multiple")
+        input#data-import-input.hidden(type="file" accept=acceptedExtensionsList multiple="multiple")
 
         #data-import-dropzone.hidden
           h2 Drop files here or click to upload
