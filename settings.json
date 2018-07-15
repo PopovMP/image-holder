@@ -5,7 +5,7 @@
     "jpeg"
   ],
   "maxFileSizeKb": 1024,
-  "passCode": 42,
+  "passCode": "",
   "port": 8080,
   "storagePath": "store",
   "metaFilePath": "db/meta.json",
