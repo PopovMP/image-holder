@@ -21,15 +21,11 @@ function connect(dbPath) {
 /**
  * Searches an image by name
  * @param {string} pattern - RegExp
- * @param {number} start
- * @param {number} count
  * @return {ImageMeta[]}
  */
-function find(pattern, start, count) {
+function find(pattern) {
     const regExp = new RegExp(pattern, "i");
-    const selection = dbContent
-        .filter(record => regExp.test(record.name))
-        .slice(start, start + count);
+    const selection = dbContent.filter(record => regExp.test(record.name));
 
     return selection;
 }
@@ -59,11 +55,11 @@ function isHashExists(fileHash) {
 /**
  * Gets images
  * @param {number} start - start index
- * @param {number} count - count of records
+ * @param {number} end - end index
  * @return {ImageMeta[]}
  */
-function get(start, count) {
-    const selection = dbContent.slice(start, count);
+function get(start, end) {
+    const selection = dbContent.slice(start, end);
 
     return selection;
 }

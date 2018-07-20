@@ -4,8 +4,12 @@ const router = require("express").Router();
 const settings = require("../settings");
 const dbManager = require("../db-manager");
 
-router.get("/", function (req, res) {
-    const preloadModel = dbManager.get(0, settings.showLastImages);
+router.get("/", getIndex);
+
+function getIndex(req, res) {
+    const imagesCount = dbManager.count();
+    const startIndex = Math.max(imagesCount - settings.showLastImages, 0);
+    const preloadModel = dbManager.get(startIndex, startIndex + imagesCount);
 
     const viewModel = {
         acceptedFiles: settings.acceptedFiles,
@@ -23,6 +27,6 @@ router.get("/", function (req, res) {
     };
 
     res.render("index", viewData);
-});
+}
 
 module.exports = router;
