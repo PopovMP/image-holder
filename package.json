@@ -1,16 +1,42 @@
 {
   "name": "image-holder",
-  "version": "1.0.0",
+  "license": "MIT",
+  "description": "It is a very simple self-hosted image holder service",
+  "version": "1.0.1",
+  "homepage": "http://forexsb.com",
   "repository": {
     "type": "git",
     "url": "https://github.com/PopovMP/image-holder"
   },
-  "license": "MIT",
+  "keywords": [
+    "image",
+    "upload",
+    "hosting",
+    "self-hosted"
+  ],
+  "engines": {
+    "node": ">= 0.10.0",
+    "npm": ">= 1.4.0"
+  },
+  "main": "index.js",
+  "scripts": {
+    "start": "node index"
+  },
   "dependencies": {
     "body-parser": "^1.18.3",
     "express": "^4.16.3",
     "morgan": "^1.9.0",
     "pug": "^2.0.3",
     "serve-favicon": "^2.5.0"
-  }
+  },
+  "bugs": {
+    "url": "https://github.com/PopovMP/image-holder/issues"
+  },
+  "maintainers": [
+    {
+      "name": "Miroslav Popov",
+      "email": "info@forexsb.com",
+      "url": "https://github.com/PopovMP"
+    }
+  ]
 }

@@ -5,3 +5,4 @@ public/store/*
 !public/store/.gitkeep
 db/*
 !db/.gitkeep
+package-lock.json
