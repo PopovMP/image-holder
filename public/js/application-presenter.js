@@ -83,7 +83,7 @@ class ApplicationPresenter {
         const imgPreviewId = `img-${idIndex}`;
         const delId = `dell-${idIndex}`;
 
-        const url = decodeURIComponent(fileMeta.url);
+        const url = decodeURIComponent(fileMeta.url).replace(/ /g, "%20");
         const time = new Date(fileMeta.time).toLocaleString();
         const thumbnailCode = fileMeta.thumbUrl ? this.getThumbnailCode(fileMeta) : "";
 
@@ -108,8 +108,8 @@ class ApplicationPresenter {
     }
 
     getThumbnailCode(fileMeta) {
-        const url = decodeURIComponent(fileMeta.url);
-        const thumbUrl = decodeURIComponent(fileMeta.thumbUrl);
+        const url = decodeURIComponent(fileMeta.url).replace(/ /g, "%20");
+        const thumbUrl = decodeURIComponent(fileMeta.thumbUrl).replace(/ /g, "%20");
         const code = this.thumbnailPattern.replace("img-url", url).replace("thumb-url", thumbUrl);
         const html = `<br /><input class="url-input" type="text" value="${code}" />`;
         return html;
