@@ -181,8 +181,7 @@ function getThumbnailFileName(imageName) {
  */
 function decodeImageContentToBuffer(data) {
     const strippedContent = data.replace(/^data:image\/\w+;base64,/, "");
-    const buffer = new Buffer(strippedContent, "base64");
-    return buffer;
+    return Buffer.from(strippedContent, "base64");
 }
 
 /**
