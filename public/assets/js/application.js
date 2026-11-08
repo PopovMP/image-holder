@@ -10,9 +10,8 @@ class Application {
         this.dropper.warningOccurred = this.dropper_warningOccurred.bind(this);
         this.dropper.errorOccurred = this.dropper_errorOccurred.bind(this);
 
-        this.presenter = new ApplicationPresenter(this.appModel.thumbnailPattern, this.appModel.isPassCodeRequired);
+        this.presenter = new ApplicationPresenter(this.appModel);
         this.presenter.searchImage = this.presenter_searchImage_submit.bind(this);
-        this.presenter.passCodeSubmit = this.presenter_passCode_submit.bind(this);
         this.presenter.deleteImage = this.presenter_deleteImage_click.bind(this);
 
         this.showImages(appModel.preloadModel);
@@ -53,30 +52,26 @@ class Application {
 
     dropper_warningOccurred(fileName, warningMessage) {
         const message = `Problem with file "${fileName}": ${warningMessage}`;
-        this.presenter.showWarning(message)
+        this.presenter.showWarning(message);
     }
 
     dropper_errorOccurred(fileName, errorMessage) {
         const message = `Error with file "${fileName}": ${errorMessage}`;
-        this.presenter.showError(message)
+        this.presenter.showError(message);
     }
 
     uploadFile(fileName, image, thumbnail) {
         const optionsModel = this.presenter.getSubmitOptions();
-        const encodedPassCode = encodeURIComponent(optionsModel.passCode);
-        const encodedFileName = encodeURIComponent(fileName);
 
         const headers = [
-            {header: "PassCode", value: encodedPassCode},
-            {header: "FileName", value: encodedFileName},
+            {header: "FileName", value: encodeURIComponent(fileName)},
             {header: "ForceUpload", value: optionsModel.isForceUpload},
-            {header: "Content-type", value: "multipart/form-data"}
+            {header: "Content-Type", value: "application/json"}
         ];
 
-        const uploadData = {image: image, thumbnail: thumbnail};
-        const encodedData = JSON.stringify(uploadData);
+        const encodedData = JSON.stringify({image: image, thumbnail: thumbnail});
 
-        IoService.postData("api/upload", encodedData, headers, this.uploadFile_ready.bind(this))
+        IoService.postData("api/upload", encodedData, headers, this.uploadFile_ready.bind(this));
     }
 
     uploadFile_ready(err, fileMeta) {
@@ -90,13 +85,11 @@ class Application {
     }
 
     presenter_searchImage_submit(phrase) {
-        const encodedSearchPhrase = encodeURIComponent(phrase);
-
         const headers = [
-            {header: "SearchPhrase", value: encodedSearchPhrase},
+            {header: "SearchPhrase", value: encodeURIComponent(phrase)}
         ];
 
-        IoService.postData("api/search", {}, headers, this.searchImage_ready.bind(this))
+        IoService.postData("api/search", "{}", headers, this.searchImage_ready.bind(this));
     }
 
     searchImage_ready(err, data) {
@@ -107,39 +100,12 @@ class Application {
         }
     }
 
-    presenter_passCode_submit(passCode) {
-        const encodedPassCode = encodeURIComponent(passCode);
-
-        const headers = [
-            {header: "PassCode", value: encodedPassCode},
-        ];
-
-        IoService.postData("api/validate", {}, headers, this.validate_ready.bind(this))
-    }
-
-    validate_ready(err, isValid) {
-        if (err) {
-            this.presenter.showError("Error with validation: " + err);
-        } else {
-            if (isValid) {
-                this.presenter.showUploadControls();
-            } else {
-                this.presenter.showWarning("Wrong pass code!")
-            }
-        }
-    }
-
     presenter_deleteImage_click(fileName, messageBoxId) {
-        const optionsModel = this.presenter.getSubmitOptions();
-        const encodedPassCode = encodeURIComponent(optionsModel.passCode);
-        const encodedFileName = encodeURIComponent(fileName);
-
         const headers = [
-            {header: "PassCode", value: encodedPassCode},
-            {header: "FileName", value: encodedFileName},
+            {header: "FileName", value: encodeURIComponent(fileName)}
         ];
 
-        IoService.postData("api/delete", {}, headers, this.deleteFile_ready.bind(this, messageBoxId))
+        IoService.postData("api/delete", "{}", headers, this.deleteFile_ready.bind(this, messageBoxId));
     }
 
     deleteFile_ready(messageBoxId, err, data) {
@@ -150,4 +116,56 @@ class Application {
             this.presenter.removeMessageBox(messageBoxId);
         }
     }
+}
+
+/*
+ * The page model is passed as a data attribute rather than an inline script so
+ * that the Content-Security-Policy can forbid inline JavaScript entirely.
+ */
+window.addEventListener("DOMContentLoaded", () => {
+    const wrapper = document.getElementById("wrapper");
+
+    if (!wrapper) {
+        return;
+    }
+
+    let appModel;
+
+    try {
+        appModel = JSON.parse(wrapper.dataset.appModel);
+    } catch (e) {
+        console.error("Cannot read the page model.", e);
+        showFatalMessage("The page data could not be read. Reload the page; if it keeps happening, check the browser console.");
+        return;
+    }
+
+    try {
+        new Application(appModel);
+    } catch (e) {
+        console.error("The application failed to start.", e);
+        showFatalMessage(`The page failed to start: ${e.message}`);
+    }
+});
+
+/**
+ * Shows a visible error box even when the presenter could not be created.
+ * A silent blank page is the worst possible failure mode here.
+ * @param {string} message
+ */
+function showFatalMessage(message) {
+    const host = document.getElementById("messages");
+
+    if (!host) {
+        return;
+    }
+
+    const box = document.createElement("div");
+    box.className = "message error";
+
+    const text = document.createElement("p");
+    text.className = "message-text";
+    text.textContent = message;
+
+    box.appendChild(text);
+    host.insertBefore(box, host.firstChild);
 }
