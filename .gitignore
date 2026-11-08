@@ -1,8 +1,8 @@
 .idea
 .vscode
 node_modules
+config/
 public/store/*
 !public/store/.gitkeep
 db/*
 !db/.gitkeep
-package-lock.json
