@@ -4,41 +4,40 @@ doctype html
 html(lang="en")
   head
     meta(charset="utf-8")
+    meta(name="viewport" content="width=device-width, initial-scale=1")
+    meta(name="robots" content="noindex, nofollow")
     title Image Holder
-    link(rel="stylesheet" href="assets/css/style.css?v=1.6")
+    link(rel="stylesheet" href="assets/css/style.css?v=" + assetVersion)
   body
-    #wrapper
-      form#form-search(style="float: right")
-        label(for="input-search") Search:
-        input#input-search(type="text" autocomplete="off" style="margin-left: 10px")
+    #wrapper(data-app-model=appModel)
+      header.toolbar
+        h1.toolbar-title Image Holder
 
-      h1 Image Holder
+        form#form-search.toolbar-search
+          label.visually-hidden(for="input-search") Search
+          input#input-search(type="search" autocomplete="off" placeholder="Search images...")
 
-      #data-import-field
-        if viewModel.isPassCodeRequired
-          form#form-pass-code
-            label(for="pass-code-element") Access pass code:
-            input#pass-code-element(type="password" autocomplete="off")
+        form#form-logout
+          button#button-logout.button-secondary(type="submit") Sign out
 
+      section#import-panel
         input#data-import-input.hidden(type="file" accept=acceptedExtensionsList multiple="multiple")
 
-        #data-import-dropzone.hidden
-          h2 Drop files here or click to upload
-          p Accepted file types: #{viewModel.acceptedFiles.join(", ")}.
-          p Max file size - #{viewModel.maxFileSizeKb} kB.
+        #data-import-dropzone
+          p.dropzone-title Drop images here or click to upload
+          p.dropzone-hint #{viewModel.acceptedFiles.join(", ")} · max #{viewModel.maxFileSizeKb} kB
 
-        form#form-upload-options.hidden(style="margin-top: 20px;")
+        label.force-upload-line
           input#checkbox-force-upload(type="checkbox" name="force-upload")
-          label(for="checkbox-force-upload") Force upload to proceed with duplicated files.
+          span Force upload (replace duplicates)
 
-      #output-content
+      #messages
+      #image-grid
 
-      p
+      footer.site-footer
         a(href="https://github.com/PopovMP/image-holder") https://github.com/PopovMP/image-holder
 
-    script(src="assets/js/io-service.js")
-    script(src="assets/js/file-dropper.js")
-    script(src="assets/js/application-presenter.js")
-    script(src="assets/js/application.js")
-    script.
-        new Application(!{appModel});
+    script(src="assets/js/io-service.js?v=" + assetVersion)
+    script(src="assets/js/file-dropper.js?v=" + assetVersion)
+    script(src="assets/js/application-presenter.js?v=" + assetVersion)
+    script(src="assets/js/application.js?v=" + assetVersion)

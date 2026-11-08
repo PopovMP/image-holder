@@ -1,47 +1,57 @@
 "use strict";
 
 class ApplicationPresenter {
-    constructor(thumbnailPattern, isPassCodeRequired) {
+    constructor(appModel) {
         this.searchImage = null;
-        this.passCodeSubmit = null;
         this.deleteImage = null;
         this.idIndex = 0;
 
-        this.isPassCodeRequired = isPassCodeRequired;
-        this.thumbnailPattern = thumbnailPattern;
-
-        if (this.isPassCodeRequired) {
-            this.formPassCode = document.getElementById("form-pass-code");
-            this.inputPassCode = document.getElementById("pass-code-element");
-            this.formPassCode.addEventListener("submit", this.formPassCode_submit.bind(this))
-        } else {
-            this.showUploadControls();
-        }
+        this.thumbnailPattern = appModel.thumbnailPattern;
 
         this.checkboxForceUpload = document.getElementById("checkbox-force-upload");
-
         this.formSearch = document.getElementById("form-search");
         this.inputSearch = document.getElementById("input-search");
-        this.outputContent = document.getElementById("output-content");
+        this.messages = document.getElementById("messages");
+        this.grid = document.getElementById("image-grid");
 
         this.formSearch.addEventListener("submit", this.formSearch_submit.bind(this));
+
+        // Clicking a link field selects its whole value, ready to copy.
+        this.grid.addEventListener("click", this.grid_click.bind(this));
     }
 
     getSubmitOptions() {
-        const optionsModel = {
-            passCode: this.isPassCodeRequired ? this.inputPassCode.value : "",
+        return {
             isForceUpload: this.checkboxForceUpload.checked
         };
-
-        return optionsModel;
     }
 
-    showUploadControls() {
-        if (this.isPassCodeRequired) {
-            document.getElementById("form-pass-code").classList.add("hidden");
+    /**
+     * Escapes text before it is placed into an HTML string. File names are
+     * attacker controlled, so this is what keeps a crafted upload from
+     * injecting markup into the page.
+     * @param {*} value
+     * @return {string}
+     */
+    static escapeHtml(value) {
+        return String(value === undefined || value === null ? "" : value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+    }
+
+    /**
+     * @param {string} value
+     * @return {string} a usable absolute URL, or "" when there is none
+     */
+    static toUrl(value) {
+        if (typeof value !== "string" || value.length === 0) {
+            return "";
         }
-        document.getElementById("data-import-dropzone").classList.remove("hidden");
-        document.getElementById("form-upload-options").classList.remove("hidden");
+
+        return decodeURIComponent(value).replace(/ /g, "%20");
     }
 
     scaleImage(imageData, maxWidth, maxHeight, callback) {
@@ -77,46 +87,59 @@ class ApplicationPresenter {
         return mimeType;
     }
 
+    /**
+     * Renders one image card. The card shows the thumbnail (small, quick) and
+     * links to the full-size file. Every card has the same structure, so all
+     * cards in a row are the same height and the fields line up at the bottom.
+     * @param {object} fileMeta
+     */
     showImageOutput(fileMeta) {
-        const idIndex = ++this.idIndex;
-        const messageBoxId = `message-${idIndex}`;
-        const imgPreviewId = `img-${idIndex}`;
-        const delId = `dell-${idIndex}`;
+        const cardId = `card-${++this.idIndex}`;
+        const deleteId = `${cardId}-delete`;
 
-        const url = decodeURIComponent(fileMeta.url).replace(/ /g, "%20");
+        const url = ApplicationPresenter.toUrl(fileMeta.url);
+        const previewUrl = ApplicationPresenter.toUrl(fileMeta.thumbUrl) || url;
         const time = new Date(fileMeta.time).toLocaleString();
-        const thumbnailCode = fileMeta.thumbUrl ? this.getThumbnailCode(fileMeta) : "";
+        const forumCode = this.getThumbnailCode(fileMeta);
 
-        const messageElement =
-            `<div class="message url-filed" id="${messageBoxId}">
-                <a id="${delId}" href="#" class="delete-button" title="Delete image">x</a>
-                <h3 class="image-box-header">${fileMeta.name}</h3>
-                <p>Size: ${fileMeta.size} kB, uploaded at: ${time}</p>
-                <a href="${url}" target="_blank"><img id="${imgPreviewId}" class="image-preview" src="" alt="Image preview" /></a>
-                <br />
-                <input class="url-input" type="text" value="${url}" />
-                ${thumbnailCode}
-            </div>`;
+        const escape = ApplicationPresenter.escapeHtml;
 
-        this.outputContent.insertAdjacentHTML("afterbegin", messageElement);
+        const card =
+            `<article class="image-card" id="${cardId}">
+                <button id="${deleteId}" class="delete-button" type="button" title="Delete image">&times;</button>
+                <a class="card-preview" href="${escape(url)}" target="_blank" rel="noopener noreferrer">
+                    <img src="${escape(previewUrl)}" alt="${escape(fileMeta.name)}" loading="lazy" decoding="async" />
+                </a>
+                <div class="card-body">
+                    <h3 class="card-title" title="${escape(fileMeta.name)}">${escape(fileMeta.name)}</h3>
+                    <p class="card-meta">${escape(fileMeta.size)} kB &middot; ${escape(time)}</p>
+                    <div class="card-fields">
+                        <label class="field-label" for="${cardId}-url">Image URL</label>
+                        <input id="${cardId}-url" class="url-input" type="text" readonly="readonly" value="${escape(url)}" />
+                        <label class="field-label" for="${cardId}-forum">Forum code</label>
+                        <input id="${cardId}-forum" class="url-input" type="text" readonly="readonly" value="${escape(forumCode)}" />
+                    </div>
+                </div>
+            </article>`;
 
-        const imagePreview = document.getElementById(imgPreviewId);
-        imagePreview["src"] = url;
+        this.grid.insertAdjacentHTML("afterbegin", card);
 
-        const deleteButton = document.getElementById(delId);
-        deleteButton.addEventListener("click", this.image_delete_click.bind(this, fileMeta.name, messageBoxId));
+        const deleteButton = document.getElementById(deleteId);
+        deleteButton.addEventListener("click", this.image_delete_click.bind(this, fileMeta.name, cardId));
     }
 
     getThumbnailCode(fileMeta) {
-        const url = decodeURIComponent(fileMeta.url).replace(/ /g, "%20");
-        const thumbUrl = decodeURIComponent(fileMeta.thumbUrl).replace(/ /g, "%20");
-        const code = this.thumbnailPattern.replace("img-url", url).replace("thumb-url", thumbUrl);
-        const html = `<br /><input class="url-input" type="text" value="${code}" />`;
-        return html;
+        const url = ApplicationPresenter.toUrl(fileMeta.url);
+        const thumbUrl = ApplicationPresenter.toUrl(fileMeta.thumbUrl) || url;
+
+        // Split/join replaces every placeholder, not just the first one.
+        return this.thumbnailPattern
+            .split("img-url").join(url)
+            .split("thumb-url").join(thumbUrl);
     }
 
     clearOutput() {
-        this.outputContent.innerHTML = "";
+        this.grid.innerHTML = "";
     }
 
     showInfo(message) {
@@ -134,22 +157,26 @@ class ApplicationPresenter {
     showMessage(message, tag) {
         const idIndex = ++this.idIndex;
         const messageBoxId = `message-${idIndex}`;
-        const delId = `dell-${idIndex}`;
+        const delId = `${messageBoxId}-close`;
 
         const messageElement =
             `<div class="message ${tag}" id="${messageBoxId}">
-                <a id="${delId}" href="#" class="delete-button" title="Remove message">x</a>
-                <p style="margin: 0">${message}</p>
+                <button id="${delId}" class="delete-button" type="button" title="Dismiss">&times;</button>
+                <p class="message-text">${ApplicationPresenter.escapeHtml(message)}</p>
             </div>`;
 
-        this.outputContent.insertAdjacentHTML("afterbegin", messageElement);
+        this.messages.insertAdjacentHTML("afterbegin", messageElement);
 
         const deleteButton = document.getElementById(delId);
         deleteButton.addEventListener("click", this.removeMessage_click.bind(this, messageBoxId));
     }
 
     removeMessageBox(messageBoxId) {
-        document.getElementById(messageBoxId).remove();
+        const element = document.getElementById(messageBoxId);
+
+        if (element) {
+            element.remove();
+        }
     }
 
     formSearch_submit(event) {
@@ -161,12 +188,11 @@ class ApplicationPresenter {
         }
     }
 
-    formPassCode_submit(event) {
-        event.preventDefault();
+    grid_click(event) {
+        const target = event.target;
 
-        if (typeof this.passCodeSubmit === "function") {
-            const passCode = this.inputPassCode.value;
-            this.passCodeSubmit(passCode);
+        if (target && typeof target.matches === "function" && target.matches("input.url-input")) {
+            target.select();
         }
     }
 

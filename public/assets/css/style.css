@@ -1,89 +1,405 @@
-#wrapper {
-  margin-left: 20px;
-  max-width: 640px;
+/* Image Holder - single stylesheet, no external fonts or assets. */
+
+:root {
+  --bg: #f4f6f8;
+  --surface: #ffffff;
+  --border: #d9e0e6;
+  --text: #1f2933;
+  --muted: #6b7785;
+  --accent: #0b6bcb;
+  --accent-dark: #0956a4;
+  --danger: #c0392b;
+  --radius: 10px;
+  --shadow: 0 1px 2px rgba(16, 24, 40, .06), 0 1px 3px rgba(16, 24, 40, .08);
 }
 
-#data-import-field {
-  border-radius: 5px;
-  background-color: #ceecca;
-  padding: 20px;
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-text-size-adjust: 100%;
+}
+
+#wrapper {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 24px 20px 64px;
+}
+
+a {
+  color: var(--accent);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------- toolbar */
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.toolbar-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 650;
+  letter-spacing: -.01em;
+}
+
+.toolbar-search {
+  display: flex;
+  flex: 1 1 240px;
+  min-width: 180px;
+}
+
+#input-search {
+  width: 100%;
+  padding: 9px 12px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+#input-search:focus,
+.url-input:focus,
+input[type="password"]:focus {
+  outline: 2px solid rgba(11, 107, 203, .35);
+  outline-offset: 1px;
+  border-color: var(--accent);
+}
+
+/* ---------------------------------------------------------------- buttons */
+
+button {
+  font: inherit;
+  cursor: pointer;
+  border-radius: 8px;
+  border: 1px solid transparent;
+}
+
+.button-secondary,
+#button-login {
+  padding: 9px 16px;
+  font-size: 14px;
+  font-weight: 550;
+  color: #ffffff;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.button-secondary:hover,
+#button-login:hover {
+  background: var(--accent-dark);
+  border-color: var(--accent-dark);
+}
+
+/* ---------------------------------------------------------------- import */
+
+#import-panel {
+  margin-bottom: 22px;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
 }
 
 #data-import-dropzone {
-  min-height: 150px;
-  border: 1px solid #0087f7;
-  box-sizing: border-box;
-  border-radius: 5px;
-  background: white;
-  padding: 20px 50px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 110px;
+  padding: 18px 20px;
+  text-align: center;
+  border: 2px dashed var(--border);
+  border-radius: 8px;
+  background: #fbfcfd;
+  cursor: pointer;
+  transition: background-color .12s ease, border-color .12s ease;
+}
+
+#data-import-dropzone:hover,
+#data-import-dropzone.hover {
+  background: #eef5ff;
+  border-color: var(--accent);
+}
+
+.dropzone-title {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.dropzone-hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.force-upload-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--muted);
   cursor: pointer;
 }
 
-#data-import-dropzone.hover {
-  background-color: #a0d8ff;
-  border: 2px solid #0087f7;
-}
-
-#pass-code-element {
-  margin-left: 10px;
+.force-upload-line input {
+  margin: 0;
 }
 
 .hidden {
   display: none;
 }
 
-label {
-  font-weight: bold;
+/* --------------------------------------------------------------- messages */
+
+#messages:not(:empty) {
+  margin-bottom: 18px;
 }
 
 .message {
-  border-radius: 5px;
-  margin-top: 20px;
-  padding: 20px;
+  position: relative;
+  margin-bottom: 10px;
+  padding: 12px 40px 12px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(16, 24, 40, .08);
+  font-size: 14px;
+}
+
+.message-text {
+  margin: 0;
+  overflow-wrap: anywhere;
 }
 
 .info {
-  background-color: #ceecca;
+  background: #e7f4ea;
+  border-color: #b9dfc4;
 }
 
 .warning {
-  background-color: #ece377;
+  background: #fdf5d7;
+  border-color: #efdfa2;
 }
 
 .error {
-  background-color: #ec7f84;
+  background: #fdeaea;
+  border-color: #f2b7b7;
+  color: #8d2018;
 }
 
-.url-filed {
-  background-color: #cadfec;
+/* --------------------------------------------------------------- galleries */
+
+#image-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  align-items: stretch;
+}
+
+.image-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+/* Fixed height, so the text block below never shifts with the image shape. */
+.card-preview {
+  display: block;
+  flex: 0 0 auto;
+  height: 210px;
+  background: #eef1f4;
+}
+
+.card-preview img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.card-body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  padding: 12px 14px 14px;
+}
+
+.card-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-meta {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* Pushed to the bottom edge of every card, whatever the title length. */
+.card-fields {
+  display: flex;
+  flex-direction: column;
+  margin-top: auto;
+  padding-top: 10px;
+}
+
+.field-label {
+  margin-top: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.card-fields .field-label:first-child {
+  margin-top: 0;
 }
 
 .url-input {
   width: 100%;
-  margin-top: 10px;
+  padding: 6px 8px;
+  font-size: 12px;
+  color: var(--text);
+  background: #fbfcfd;
+  border: 1px solid var(--border);
+  border-radius: 6px;
 }
 
-.image-box-header {
-  margin-top: 0;
-}
-
-.image-preview {
-  max-height: 300px;
-  max-width: 100%;
-  margin-bottom: 10px;
-}
+/* ------------------------------------------------------------ dismiss / × */
 
 .delete-button {
-  float: right;
-  margin-top: -5px;
-  margin-right: -5px;
-  color: #9d9d9d;
-  text-decoration: none;
-  font-family: Arial, Helvetica, sans-serif;
-  font-weight: bold;
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 1;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  font-size: 15px;
+  line-height: 1;
+  color: var(--muted);
+  background: rgba(255, 255, 255, .88);
+  border: 1px solid var(--border);
+  border-radius: 50%;
 }
 
 .delete-button:hover {
-  color: #e73c3c;
-  text-decoration: none;
+  color: var(--danger);
+  border-color: currentColor;
+}
+
+/* ----------------------------------------------------------------- footer */
+
+.site-footer {
+  margin-top: 36px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* ------------------------------------------------------------------ login */
+
+.login-box {
+  max-width: 340px;
+  padding: 22px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.login-box label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+input[type="password"] {
+  width: 100%;
+  padding: 9px 12px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--text);
+  background: #fbfcfd;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.login-remember {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 16px 0;
+  font-size: 14px;
+}
+
+.login-remember label {
+  margin: 0;
+  font-weight: 400;
+  color: var(--text);
+}
+
+#button-login {
+  width: 100%;
+}
+
+@media (max-width: 900px) {
+  #image-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  #wrapper {
+    padding: 16px 14px 48px;
+  }
+
+  .toolbar-title {
+    font-size: 19px;
+  }
+
+  #image-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .card-preview {
+    height: 180px;
+  }
 }
