@@ -7,8 +7,29 @@ const path = require("path");
 const settings = require("./settings");
 const dbManager = require("./db-manager");
 
+const storeDir = path.resolve(__dirname, "public", settings.storagePath);
+const storePrefix = storeDir + path.sep;
+
 const metaFilePath = path.join(__dirname, settings.metaFilePath);
 dbManager.connect(metaFilePath);
+
+const allowedExtensions = new Set(settings.acceptedFiles.map(extension => extension.toLowerCase()));
+
+// Letters, digits, spaces and the punctuation already present in the existing
+// library. Anything else (slashes, quotes, percent, control chars, leading
+// dots) is rejected, which keeps stored names safe for URLs and HTML.
+const SAFE_NAME = /^[A-Za-z0-9][A-Za-z0-9 .()+_-]{0,127}$/;
+
+const MAX_NAME_LENGTH = 128;
+
+// Leading magic bytes per extension.
+const SIGNATURES = {
+    png: [[0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]],
+    jpg: [[0xff, 0xd8, 0xff]],
+    jpeg: [[0xff, 0xd8, 0xff]],
+    gif: [[0x47, 0x49, 0x46, 0x38, 0x37, 0x61], [0x47, 0x49, 0x46, 0x38, 0x39, 0x61]],
+    webp: [[0x52, 0x49, 0x46, 0x46]]
+};
 
 /**
  * @typedef {object} ImageMeta
@@ -21,184 +42,354 @@ dbManager.connect(metaFilePath);
  */
 
 /**
- * Saves an image
+ * Saves an image and its thumbnail.
  * @param {string} fileName
- * @param {string} imageData - base64 encoded
- * @param {string} thumbnailData - base64 encoded
+ * @param {string} imageData - base64 data URL
+ * @param {string} thumbnailData - base64 data URL
  * @param {boolean} isForceUpload
- * @param {string} host
- * @param {function} callback
+ * @param {function} callback - called exactly once with (errorString, ImageMeta)
  */
-function saveFile(fileName, imageData, thumbnailData, isForceUpload, host, callback) {
+function saveFile(fileName, imageData, thumbnailData, isForceUpload, callback) {
+    const done = once(callback);
 
-    const dataType = getImageType(imageData);
+    try {
+        saveFileUnguarded(fileName, imageData, thumbnailData, isForceUpload, done);
+    } catch (e) {
+        done(e.message || String(e), null);
+    }
+}
 
-    if (settings.acceptedFiles.indexOf(dataType) === -1) {
-        callback("Not supported file type.", null);
+/**
+ * @param {string} fileName
+ * @param {string} imageData
+ * @param {string} thumbnailData
+ * @param {boolean} isForceUpload
+ * @param {function} done
+ */
+function saveFileUnguarded(fileName, imageData, thumbnailData, isForceUpload, done) {
+    const nameProblem = validateFileName(fileName);
+
+    if (nameProblem) {
+        done(nameProblem, null);
         return;
     }
 
-    const imageBuffer = decodeImageContentToBuffer(imageData);
-    const fileSizeKb = Math.round(100 * imageBuffer.byteLength / 1024) / 100;
+    const image = parseImageData(imageData, fileName);
+
+    if (image.error) {
+        done(image.error, null);
+        return;
+    }
+
+    const fileSizeKb = Math.round(100 * image.buffer.byteLength / 1024) / 100;
 
     if (fileSizeKb > settings.maxFileSizeKb) {
-        const errorMessage = `The file is too big! It must be maximum ${settings.maxFileSizeKb} kB`;
-        callback(errorMessage, null);
+        done(`The file is too big! It must be maximum ${settings.maxFileSizeKb} kB`, null);
         return;
     }
 
-    const isNameExists = dbManager.isNameExists(fileName);
-    if (isNameExists && !isForceUpload) {
-        const errorMessage = "Such file already exists! Use the \"Force upload\" option, if you really want to replace the file.";
-        callback(errorMessage, null);
+    const thumbnail = parseImageData(thumbnailData, fileName);
+
+    if (thumbnail.error) {
+        done(`Thumbnail: ${thumbnail.error}`, null);
         return;
     }
 
-    const fileHash = createHash(imageBuffer);
-    const isHashExists = dbManager.isHashExists(fileHash);
-    if (isHashExists && !isForceUpload) {
-        const errorMessage = "Such image is already uploaded under different name! Use the \"Force upload\" option, if you really want to upload it again.";
-        callback(errorMessage, null);
+    if (thumbnail.kind !== image.kind) {
+        done("The thumbnail format does not match the image format.", null);
+        return;
+    }
+
+    if (dbManager.isNameExists(fileName) && !isForceUpload) {
+        done("Such file already exists! Use the \"Force upload\" option, if you really want to replace the file.", null);
+        return;
+    }
+
+    const fileHash = createHash(image.buffer);
+
+    if (dbManager.isHashExists(fileHash) && !isForceUpload) {
+        done("Such image is already uploaded under different name! Use the \"Force upload\" option, if you really want to upload it again.", null);
         return;
     }
 
     const thumbnailFileName = getThumbnailFileName(fileName);
-    const imagePath = path.join(__dirname, "public", settings.storagePath, fileName);
-    const thumbnailPath = path.join(__dirname, "public", settings.storagePath, thumbnailFileName);
+    const conflict = thumbnailConflict(fileName, thumbnailFileName);
 
-    fs.writeFile(imagePath, imageBuffer, fs_writeImage_ready);
+    if (conflict) {
+        done(conflict, null);
+        return;
+    }
 
-    /**
-     * @param {string} err
-     */
-    function fs_writeImage_ready(err) {
+    const imagePath = resolveInStore(fileName);
+    const thumbnailPath = resolveInStore(thumbnailFileName);
+
+    if (!imagePath || !thumbnailPath) {
+        done("Wrong file name!", null);
+        return;
+    }
+
+    fs.writeFile(imagePath, image.buffer, err => {
         if (err) {
-            callback(err, null);
+            done(`Cannot store the image: ${err.message}`, null);
             return;
         }
 
-        const thumbBuffer = decodeImageContentToBuffer(thumbnailData);
+        fs.writeFile(thumbnailPath, thumbnail.buffer, thumbErr => {
+            if (thumbErr) {
+                // Do not leave a half-written upload behind.
+                fs.unlink(imagePath, () => {
+                    done(`Cannot store the thumbnail: ${thumbErr.message}`, null);
+                });
+                return;
+            }
 
-        fs.writeFile(thumbnailPath, thumbBuffer, fs_writeThumbnail_ready);
-    }
+            const fileMeta = {
+                name: fileName,
+                url: buildUrl(fileName),
+                thumbUrl: buildUrl(thumbnailFileName),
+                size: fileSizeKb,
+                hash: fileHash,
+                time: Date.now()
+            };
 
-    /**
-     * @param {string} err
-     */
-    function fs_writeThumbnail_ready(err) {
-        if (err) {
-            callback(err, null);
-            return;
-        }
+            try {
+                dbManager.addOrUpdate(fileMeta);
+            } catch (e) {
+                done(`The image was written but the database failed: ${e.message}`, null);
+                return;
+            }
 
-        const fileUrl = path.join(host, settings.storagePath, fileName);
-        const thumbUrl = path.join(host, settings.storagePath, thumbnailFileName);
-        const time = new Date().getTime();
-
-        /** {ImageMeta} */
-        const fileMeta = {
-            name: fileName,
-            url: fileUrl,
-            thumbUrl: thumbUrl,
-            size: fileSizeKb,
-            hash: fileHash,
-            time: time
-        };
-
-        dbManager.addOrUpdate(fileMeta);
-
-        callback(null, fileMeta);
-    }
+            done(null, fileMeta);
+        });
+    });
 }
 
 /**
- * Deletes an image by filename and updates the DB
+ * Deletes an image and its thumbnail by name.
  * @param {string} fileName
- * @param {function} callback
+ * @param {function} callback - called exactly once with (errorString, message)
  */
 function deleteFile(fileName, callback) {
-    const filePath = path.join(__dirname, "public", settings.storagePath, fileName);
+    const done = once(callback);
 
-    const isExistsDb = dbManager.isNameExists(fileName);
-
-    if (isExistsDb) {
-        const isExists = fs.existsSync(filePath);
-        if (isExists) {
-            fs.unlink(filePath, imageUnlink_ready);
-        }
-    } else {
-        callback(`There is no such record: ${fileName}.`, null);
+    if (!dbManager.isNameExists(fileName)) {
+        done(`There is no such record: ${fileName}.`, null);
+        return;
     }
 
-    function imageUnlink_ready(err) {
-        if (err) {
-            callback(err, null);
-        }
+    const imagePath = resolveInStore(fileName);
+    const thumbnailPath = resolveInStore(getThumbnailFileName(fileName));
 
-        dbManager.remove(fileName);
-
-        const thumbName = getThumbnailFileName(fileName);
-        const thumbPath = path.join(__dirname, "public", settings.storagePath, thumbName);
-        const isThumbExists = fs.existsSync(thumbPath);
-        if (isThumbExists) {
-            fs.unlink(thumbPath, thumbUnlink_ready);
-        } else {
-            callback(null, `Image deleted: ${fileName}.`);
-        }
+    if (!imagePath || !thumbnailPath) {
+        done("Wrong file name!", null);
+        return;
     }
 
-    function thumbUnlink_ready(err) {
-        if (err) {
-            callback(err, null);
+    removeFile(imagePath, imageErr => {
+        if (imageErr) {
+            done(`Cannot delete the image: ${imageErr.message}`, null);
+            return;
         }
-        callback(null, `Image deleted: ${fileName}.`);
-    }
+
+        removeFile(thumbnailPath, thumbErr => {
+            if (thumbErr) {
+                done(`Cannot delete the thumbnail: ${thumbErr.message}`, null);
+                return;
+            }
+
+            dbManager.remove(fileName);
+            done(null, `Image deleted: ${fileName}.`);
+        });
+    });
 }
 
 /**
- * Gets the mime type from a base64 encoded image
- * @param {string} data - base64 encoded
+ * Unlinks a file, treating a missing file as success so the DB can be cleaned
+ * up even when the bytes are already gone.
+ * @param {string} filePath
+ * @param {function} callback
+ */
+function removeFile(filePath, callback) {
+    fs.unlink(filePath, err => {
+        if (err && err.code !== "ENOENT") {
+            callback(err);
+            return;
+        }
+
+        callback(null);
+    });
+}
+
+/**
+ * @param {string} fileName
+ * @return {string|null} a problem description, or null when valid
+ */
+function validateFileName(fileName) {
+    if (typeof fileName !== "string" || fileName.length === 0) {
+        return "Wrong file name!";
+    }
+
+    if (fileName.length > MAX_NAME_LENGTH) {
+        return `The file name is too long (maximum ${MAX_NAME_LENGTH} characters).`;
+    }
+
+    if (!SAFE_NAME.test(fileName)) {
+        return "The file name may only contain letters, digits, spaces and the characters - _ . ( ) +";
+    }
+
+    const extension = path.extname(fileName).toLowerCase().slice(1);
+
+    if (!allowedExtensions.has(extension)) {
+        return `Not supported file type. Allowed: ${[...allowedExtensions].join(", ")}.`;
+    }
+
+    return null;
+}
+
+/**
+ * Parses and validates a base64 image data URL.
+ * @param {string} data
+ * @param {string} fileName
+ * @return {{error?: string, buffer?: Buffer, kind?: string}}
+ */
+function parseImageData(data, fileName) {
+    if (typeof data !== "string" || data.length === 0) {
+        return {error: "Empty image content."};
+    }
+
+    const match = /^data:image\/([a-z0-9.+-]+);base64,/i.exec(data);
+
+    if (!match) {
+        return {error: "Not supported file type."};
+    }
+
+    const mime = match[1].toLowerCase();
+    const buffer = Buffer.from(data.slice(match[0].length), "base64");
+
+    if (buffer.byteLength === 0) {
+        return {error: "Empty image content."};
+    }
+
+    const extension = path.extname(fileName).toLowerCase().slice(1);
+    const kind = mime === "jpeg" ? "jpg" : mime;
+
+    if (kind !== (extension === "jpeg" ? "jpg" : extension)) {
+        return {error: "The image content does not match the file extension."};
+    }
+
+    if (!allowedExtensions.has(extension) || !hasValidSignature(buffer, extension)) {
+        return {error: "The file content is not a valid image."};
+    }
+
+    return {buffer: buffer, kind: kind};
+}
+
+/**
+ * @param {Buffer} buffer
+ * @param {string} extension
+ * @return {boolean}
+ */
+function hasValidSignature(buffer, extension) {
+    const candidates = SIGNATURES[extension];
+
+    if (!candidates) {
+        return true;
+    }
+
+    return candidates.some(signature => signature.every((byte, index) => buffer[index] === byte));
+}
+
+/**
+ * Detects names whose file would overwrite another record's thumbnail.
+ * @param {string} fileName
+ * @param {string} thumbnailFileName
+ * @return {string|null}
+ */
+function thumbnailConflict(fileName, thumbnailFileName) {
+    if (thumbnailFileName !== fileName && dbManager.isNameExists(thumbnailFileName)) {
+        return `"${thumbnailFileName}" already exists as a separate image, so it cannot be used as the thumbnail name.`;
+    }
+
+    const parsed = path.parse(fileName);
+
+    if (parsed.name.toLowerCase().endsWith("-thumb")) {
+        const parentName = `${parsed.name.slice(0, -"-thumb".length)}${parsed.ext}`;
+
+        if (dbManager.isNameExists(parentName)) {
+            return `"${fileName}" would overwrite the thumbnail of "${parentName}".`;
+        }
+    }
+
+    return null;
+}
+
+/**
+ * Builds the permanent public link for a stored file. The name part is kept
+ * as-is to stay byte-compatible with existing records; the client encodes it
+ * when rendering.
+ * @param {string} fileName
  * @return {string}
  */
-function getImageType(data) {
-    const match = data.match(/^data:image\/(\w+);base64,/);
-    return match[1];
+function buildUrl(fileName) {
+    const base = String(settings.publicBaseUrl || "").replace(/\/+$/, "");
+    const encodedBase = encodeURIComponent(base);
+
+    return `${encodedBase}/${settings.storagePath}/${fileName}`;
+}
+
+/**
+ * Resolves a file name inside the storage directory, refusing anything else.
+ * @param {string} fileName
+ * @return {string|null}
+ */
+function resolveInStore(fileName) {
+    const resolved = path.resolve(storeDir, fileName);
+
+    if (!resolved.startsWith(storePrefix)) {
+        return null;
+    }
+
+    return resolved;
 }
 
 /**
  * @param {string} imageName
+ * @return {string}
  */
 function getThumbnailFileName(imageName) {
     const parsedPath = path.parse(imageName);
-    const thumbnailName = `${parsedPath.name}-thumb${parsedPath.ext}`;
-    return thumbnailName;
+
+    return `${parsedPath.name}-thumb${parsedPath.ext}`;
 }
 
 /**
- * Decodes a base64 image content to a buffer
- * @param {string} data - base64 encoded
- * @return {Buffer}
- */
-function decodeImageContentToBuffer(data) {
-    const strippedContent = data.replace(/^data:image\/\w+;base64,/, "");
-    return Buffer.from(strippedContent, "base64");
-}
-
-/**
- * Creates a sha256 hash code
- * @param {*} data
+ * @param {Buffer} data
  * @return {string}
  */
 function createHash(data) {
-    const hash = crypto
-        .createHash("sha256")
-        .update(data)
-        .digest("hex");
+    return crypto.createHash("sha256").update(data).digest("hex");
+}
 
-    return hash;
+/**
+ * Wraps a callback so it can only ever fire once.
+ * @param {function} callback
+ * @return {function}
+ */
+function once(callback) {
+    let isCalled = false;
+
+    return function (...args) {
+        if (isCalled) {
+            return;
+        }
+
+        isCalled = true;
+        callback(...args);
+    };
 }
 
 module.exports = {
+    deleteFile: deleteFile,
     saveFile: saveFile,
-    deleteFile: deleteFile
+    validateFileName: validateFileName
 };

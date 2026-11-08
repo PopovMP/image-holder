@@ -1,71 +1,152 @@
 "use strict";
 
+/**
+ * Tiny JSON-file backed record store.
+ *
+ * Writes are synchronous, atomic (temp file + fsync + rename) and keep a
+ * `.bak` copy of the previous good state, so a crash mid-write can never
+ * truncate the database. If the main file is unreadable at startup the
+ * backup is used, and the damaged file is kept aside for inspection.
+ */
+
 const fs = require("fs");
+const path = require("path");
 
 let dbFilePath;
 let dbContent = [];
 
 /**
- * Loads a db file
+ * Loads the db file, falling back to the backup copy.
  * @param {string} dbPath
  */
 function connect(dbPath) {
     dbFilePath = dbPath;
-    const isExists = fs.existsSync(dbFilePath);
-    if (isExists) {
-        const content = fs.readFileSync(dbFilePath, "utf8");
-        dbContent = JSON.parse(content);
+    dbContent = load();
+}
+
+/**
+ * @return {ImageMeta[]}
+ */
+function load() {
+    const backupPath = `${dbFilePath}.bak`;
+    const problems = [];
+
+    for (const candidate of [dbFilePath, backupPath]) {
+        if (!fs.existsSync(candidate)) {
+            continue;
+        }
+
+        try {
+            const raw = fs.readFileSync(candidate, "utf8");
+            const parsed = JSON.parse(raw);
+
+            if (!Array.isArray(parsed)) {
+                throw new Error("expected an array of records");
+            }
+
+            const records = parsed.filter(isRecord);
+            const dropped = parsed.length - records.length;
+
+            if (dropped > 0) {
+                console.warn(`[db] Ignored ${dropped} malformed record(s) in ${candidate}.`);
+            }
+
+            if (candidate !== dbFilePath) {
+                console.warn(`[db] Main database unreadable, recovered ${records.length} record(s) from ${backupPath}.`);
+            } else {
+                console.log(`[db] ${records.length} record(s) loaded.`);
+            }
+
+            return records;
+        } catch (e) {
+            problems.push(`${candidate}: ${e.message}`);
+
+            if (candidate === dbFilePath) {
+                quarantine(candidate);
+            }
+        }
+    }
+
+    if (problems.length > 0) {
+        throw new Error(`Cannot read the image database. ${problems.join("; ")}`);
+    }
+
+    return [];
+}
+
+/**
+ * Keeps a damaged database file for forensics instead of overwriting it.
+ * @param {string} filePath
+ */
+function quarantine(filePath) {
+    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+
+    try {
+        fs.renameSync(filePath, `${filePath}.corrupt-${stamp}`);
+        console.error(`[db] Moved unreadable database to ${filePath}.corrupt-${stamp}`);
+    } catch (e) {
+        console.error(`[db] Could not quarantine ${filePath}: ${e.message}`);
     }
 }
 
 /**
- * Searches an image by name
- * @param {string} pattern - RegExp
- * @return {ImageMeta[]}
+ * @param {*} record
+ * @return {boolean}
  */
-function find(pattern) {
-    const regExp = new RegExp(pattern, "i");
-    const selection = dbContent.filter(record => regExp.test(record.name));
-
-    return selection;
+function isRecord(record) {
+    return Boolean(record)
+        && typeof record === "object"
+        && typeof record.name === "string"
+        && record.name.length > 0;
 }
 
 /**
- * Gets if such image name already exists
+ * Searches an image by name. The phrase is treated as a literal string, never
+ * as a pattern, so user input cannot throw or backtrack catastrophically.
+ * @param {string} pattern
+ * @return {ImageMeta[]}
+ */
+function find(pattern) {
+    const phrase = String(pattern === undefined || pattern === null ? "" : pattern).slice(0, 200);
+    const regExp = new RegExp(escapeRegExp(phrase), "i");
+
+    return dbContent.filter(record => regExp.test(record.name));
+}
+
+/**
+ * @param {string} text
+ * @return {string}
+ */
+function escapeRegExp(text) {
+    return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
  * @param {string} fileName
  * @return {boolean}
  */
 function isNameExists(fileName) {
-    const isNameExists = dbContent.some(e => e.name === fileName);
-
-    return isNameExists;
+    return dbContent.some(record => record.name === fileName);
 }
 
 /**
- * Gets if such image content already exists
  * @param {string} fileHash
  * @return {boolean}
  */
 function isHashExists(fileHash) {
-    const isHashExists = dbContent.some(e => e.hash === fileHash);
-
-    return isHashExists;
+    return dbContent.some(record => record.hash === fileHash);
 }
 
 /**
- * Gets images
- * @param {number} start - start index
- * @param {number} end - end index
+ * @param {number} start
+ * @param {number} end
  * @return {ImageMeta[]}
  */
 function get(start, end) {
-    const selection = dbContent.slice(start, end);
-
-    return selection;
+    return dbContent.slice(start, end);
 }
 
 /**
- * Gets the count of the stored images.
  * @return {number}
  */
 function count() {
@@ -73,50 +154,64 @@ function count() {
 }
 
 /**
- * Adds or updates a meta record in DB by name and saves the DB file.
+ * Adds or updates a record by name and persists the file.
  * @param {ImageMeta} record
  */
 function addOrUpdate(record) {
-    for (let i = 0; i < dbContent.length; i++) {
-        if (dbContent[i].name === record.name) {
-            dbContent[i] = record;
+    const index = dbContent.findIndex(existing => existing.name === record.name);
 
-            save();
-
-            return;
-        }
+    if (index === -1) {
+        dbContent.push(record);
+    } else {
+        dbContent[index] = record;
     }
-
-    dbContent.push(record);
 
     save();
 }
 
 /**
- * Removes a record with the given name from DB
- * @param fileName
+ * Removes all records with the given name and persists the file.
+ * @param {string} fileName
  */
 function remove(fileName) {
-    for (let i = dbContent.length - 1; i >= 0; i--) {
-        if (dbContent[i].name === fileName) {
-            dbContent.splice(i, 1);
+    const before = dbContent.length;
 
-            save();
-        }
+    dbContent = dbContent.filter(record => record.name !== fileName);
+
+    if (dbContent.length !== before) {
+        save();
     }
 }
 
 /**
- * Stores the db file
+ * Persists the database atomically.
  */
 function save() {
-    const dbText = JSON.stringify(dbContent);
-    fs.writeFile(dbFilePath, dbText, "utf8", fs_writeFile_ready);
+    const tmpPath = `${dbFilePath}.tmp`;
+    const backupPath = `${dbFilePath}.bak`;
 
-    function fs_writeFile_ready(err) {
-        if (err) {
-            console.error(err);
+    try {
+        fs.mkdirSync(path.dirname(dbFilePath), {recursive: true});
+
+        const fd = fs.openSync(tmpPath, "w", 0o600);
+
+        try {
+            fs.writeFileSync(fd, JSON.stringify(dbContent), "utf8");
+            fs.fsyncSync(fd);
+        } finally {
+            fs.closeSync(fd);
         }
+
+        if (fs.existsSync(dbFilePath)) {
+            fs.copyFileSync(dbFilePath, backupPath);
+            fs.chmodSync(backupPath, 0o600);
+        }
+
+        // Atomic on POSIX: readers see either the old or the new file.
+        fs.renameSync(tmpPath, dbFilePath);
+    } catch (e) {
+        console.error(`[db] Failed to save ${dbFilePath}: ${e.message}`);
+        throw e;
     }
 }
 
