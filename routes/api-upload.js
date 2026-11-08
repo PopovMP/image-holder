@@ -1,58 +1,52 @@
 "use strict";
 
-const path = require("path");
-const router = require("express").Router();
+const express = require("express");
+const router = express.Router();
 const settings = require("../settings");
 const fileManager = require("../file-manager");
+const readHeader = require("./read-header");
 
-router.post("/upload", uploadImage);
+// Hard ceiling on the request body: base64 image + base64 thumbnail, plus JSON
+// overhead. Without this a single request could exhaust the process memory.
+const bodyLimit = `${Number(settings.maxUploadBodyKb) || 4096}kb`;
+const jsonParser = express.json({limit: bodyLimit});
 
+router.post("/upload", jsonParser, uploadImage);
+
+/**
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ */
 function uploadImage(req, res) {
-    const fileNameEncoded = req.header("FileName");
-    const passCodeEncoded = req.header("PassCode");
-    const isForceUpload = req.header("ForceUpload").toLowerCase() === "true";
-
-    const fileNameDecoded = decodeURIComponent(fileNameEncoded);
-    const fileName = path.basename(fileNameDecoded);
-    const passCode = decodeURIComponent(passCodeEncoded);
-
-    if (!fileName) {
-        res.json({err: "Wrong file name!", data: null});
+    if (!req.is("application/json")) {
+        res.status(415).json({err: "Expected an application/json body.", data: null});
         return;
     }
 
-    const requiredPassCode = typeof settings.passCode === "string"
-        ? settings.passCode
-        : settings.passCode.toString();
+    const header = readHeader(req, "FileName");
 
-    const isCodeValid = !settings.passCode || passCode === requiredPassCode;
-
-    if (!isCodeValid) {
-        res.json({err: "Wrong pass code!", data: null});
+    if (header.error) {
+        res.status(400).json({err: header.error, data: null});
         return;
     }
 
-    let uploadData = "";
-    req.on("data", chunk => uploadData += chunk);
-    req.on("end", req_end);
+    const fileName = String(header.value);
+    const isForceUpload = String(req.get("ForceUpload") || "").toLowerCase() === "true";
+    const body = req.body || {};
 
-    function req_end() {
-        try {
-            const data = JSON.parse(uploadData);
-            if (data.image && data.thumbnail) {
-                const host = encodeURIComponent(req.headers.origin);
-                fileManager.saveFile(fileName, data.image, data.thumbnail, isForceUpload, host, fileUpload_ready);
-            } else {
-                res.json({err: "Error with receiving content!", data: null});
-            }
-        } catch (e) {
-            res.json({err: e, data: null});
+    if (typeof body.image !== "string" || typeof body.thumbnail !== "string") {
+        res.status(400).json({err: "Error with receiving content!", data: null});
+        return;
+    }
+
+    fileManager.saveFile(fileName, body.image, body.thumbnail, isForceUpload, (err, data) => {
+        if (err) {
+            res.status(400).json({err: err, data: null});
+            return;
         }
-    }
 
-    function fileUpload_ready(err, data) {
-        res.json({err: err, data: data});
-    }
+        res.json({err: null, data: data});
+    });
 }
 
 module.exports = router;

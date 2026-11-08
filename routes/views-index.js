@@ -1,19 +1,24 @@
 "use strict";
 
-const router = require("express").Router();
+const express = require("express");
+const router = express.Router();
 const settings = require("../settings");
 const dbManager = require("../db-manager");
 
 router.get("/", getIndex);
 
+/**
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ */
 function getIndex(req, res) {
     const imagesCount = dbManager.count();
-    const startIndex = Math.max(imagesCount - settings.showLastImages, 0);
-    const preloadModel = dbManager.get(startIndex, startIndex + imagesCount);
+    const maxShown = Math.max(1, Number(settings.showLastImages) || 20);
+    const startIndex = Math.max(imagesCount - maxShown, 0);
+    const preloadModel = dbManager.get(startIndex, imagesCount);
 
     const viewModel = {
         acceptedFiles: settings.acceptedFiles,
-        isPassCodeRequired: !!settings.passCode,
         maxFileSizeKb: settings.maxFileSizeKb,
         thumbnailPattern: settings.thumbnailPattern,
         thumbnailWidth: settings.thumbnailWidth,
@@ -21,12 +26,13 @@ function getIndex(req, res) {
         preloadModel: preloadModel
     };
 
-    const viewData = {
+    // Page content is per-user and must never be cached by a proxy.
+    res.setHeader("Cache-Control", "no-store");
+
+    res.render("index", {
         viewModel: viewModel,
         appModel: JSON.stringify(viewModel)
-    };
-
-    res.render("index", viewData);
+    });
 }
 
 module.exports = router;

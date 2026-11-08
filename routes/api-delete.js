@@ -1,42 +1,40 @@
 "use strict";
 
 const path = require("path");
-const router = require("express").Router();
-const settings = require("../settings");
+const express = require("express");
+const router = express.Router();
 const fileManager = require("../file-manager");
+const readHeader = require("./read-header");
 
 router.post("/delete", deleteImage);
 
+/**
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ */
 function deleteImage(req, res) {
-    const fileNameEncoded = req.header("FileName");
-    const passCodeEncoded = req.header("PassCode");
+    const header = readHeader(req, "FileName");
 
-    const fileNameDecoded = decodeURIComponent(fileNameEncoded);
-    const fileName = path.basename(fileNameDecoded);
-    const passCode = decodeURIComponent(passCodeEncoded);
+    if (header.error) {
+        res.status(400).json({err: header.error, data: null});
+        return;
+    }
+
+    const fileName = path.basename(String(header.value));
 
     if (!fileName) {
-        res.json({err: "Wrong file name!", data: null});
+        res.status(400).json({err: "Wrong file name!", data: null});
         return;
     }
 
-    const requiredPassCode = typeof settings.passCode === "string"
-        ? settings.passCode
-        : settings.passCode.toString();
+    fileManager.deleteFile(fileName, (err, data) => {
+        if (err) {
+            res.status(400).json({err: err, data: null});
+            return;
+        }
 
-    const isCodeValid = !settings.passCode || passCode === requiredPassCode;
-
-    if (!isCodeValid) {
-        res.json({err: "Wrong pass code!", data: null});
-        return;
-    }
-
-    fileManager.deleteFile(fileName, deleteFile_ready);
-
-
-    function deleteFile_ready(err, data) {
-        res.json({err: err, data: data});
-    }
+        res.json({err: null, data: data});
+    });
 }
 
 module.exports = router;
