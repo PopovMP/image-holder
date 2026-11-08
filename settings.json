@@ -5,8 +5,9 @@
     "jpeg"
   ],
   "maxFileSizeKb": 1024,
-  "passCode": "",
-  "port": 8080,
+  "maxUploadBodyKb": 4096,
+  "port": 7050,
+  "publicBaseUrl": "https://image-holder.forexsb.com",
   "storagePath": "store",
   "metaFilePath": "db/meta.json",
   "maxSearchCount": 20,
