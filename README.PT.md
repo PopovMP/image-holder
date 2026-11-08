@@ -11,11 +11,12 @@ Hospedagem de imagens / envio de imagens
 - Image Holder é um aplicativo que roda em node.js
 - Fornece um upload de imagens de arrastar / soltar.
 - Armazena os arquivos e miniaturas em uma pasta local pública.
-- Pode exigir uma chave de acesso para um upload (definido nas configurações do servidor).
+- A interface administrativa e a API são protegidas por uma senha de acesso com "lembrar de mim".
+- As imagens continuam públicas, para poderem ser incorporadas em fóruns.
 - Mostra a última visualização de imagens no carregamento.
-- Tem uma pesquisa RegExp através de todas as imagens enviadas.
+- Tem uma pesquisa por texto literal através de todas as imagens enviadas.
 - Gerencia arquivos duplicados.
-- Valida o tamanho da imagem, a extensão do arquivo e o tipo MIME.
+- Valida o tamanho, a extensão, os bytes mágicos e o tipo MIME da imagem.
 - Mostra código para integração em fóruns (o formato do código é personalizável).
 
 Image Holder em ação: <https://image-holder.forexsb.com/>
@@ -28,14 +29,15 @@ Node.js <https://nodejs.org>
 
 ## Configurações
 
-settings.json
+O settings.json contém apenas configuração, sem segredos (ele vai para o git).
 
 ```json
 {
   "acceptedFiles": ["png", "jpg", "jpeg"],
   "maxFileSizeKb": 1024,
-  "passCode": 42,
+  "maxUploadBodyKb": 4096,
   "port": 8080,
+  "publicBaseUrl": "https://image-holder.example.com",
   "storagePath": "store",
   "metaFilePath": "db/meta.json",
   "maxSearchCount": 20,
@@ -46,7 +48,23 @@ settings.json
 }
 ```
 
-O passCode pode ser um número ou uma string. Se for 0 ou "", a entrada "Código de acesso" ficará oculta.
+## Autenticação
+
+Não há credenciais neste repositório. A senha fica em `config/auth.json`, que
+é ignorado pelo git e criado com permissão 600, guardando apenas um hash scrypt:
+
+```shell
+npm run set-password                    # pede uma senha
+npm run set-password -- --generate      # gera uma senha aleatória forte
+npm run set-password -- --rotate-secret # encerra a sessão de todos os dispositivos
+```
+
+As sessões são cookies assinados (`HttpOnly`, `Secure`, `SameSite=Strict`)
+registrados em `config/sessions.json`, portanto sair realmente invalida o token
+no servidor. As tentativas de login são limitadas por IP.
+
+Os caminhos `/store/`, `/assets/` e `/favicon.ico` continuam públicos - é isso
+que permite incorporar as imagens. Todo o resto exige sessão.
 
 ## Instalação
 
