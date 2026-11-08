@@ -1,0 +1,24 @@
+doctype html
+html(lang="en")
+  head
+    meta(charset="utf-8")
+    meta(name="viewport" content="width=device-width, initial-scale=1")
+    meta(name="robots" content="noindex, nofollow")
+    title Sign in - Image Holder
+    link(rel="stylesheet" href="assets/css/style.css?v=" + assetVersion)
+  body
+    #wrapper
+      h1 Image Holder
+
+      form#form-login.login-box(method="post" action="login")
+        if error
+          p.message.error= error
+
+        label(for="password-element") Password:
+        input#password-element(type="password" name="password" autocomplete="current-password" autofocus required)
+
+        p.login-remember
+          input#remember-element(type="checkbox" name="remember")
+          label(for="remember-element") Remember me
+
+        button#button-login(type="submit") Sign in
