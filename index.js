@@ -75,7 +75,9 @@ server.on("error", onError);
 server.on("listening", onListening);
 
 if (require.main === module) {
-    server.listen(port);
+    // Bind to the loopback interface only. nginx publishes the app; listening
+    // on 0.0.0.0 would expose it directly on the host
+    server.listen(port, "127.0.0.1");
     process.on("SIGTERM", shutdown);
     process.on("SIGINT", shutdown);
 }
